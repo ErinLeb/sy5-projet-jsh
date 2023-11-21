@@ -6,34 +6,36 @@
 #include <unistd.h>
 #include <stdio.h>
 
+DIR * courant; 
 char * path_courant;
 int jobs;
-int ret;
+int ret; 
 bool boucle;
-DIR * courant;
+
+
+int res;
+
 
 int main(int argc, char const *argv[]){
-    path_courant = "/";
-    jobs = 0; 
-    ret = 0;  
-    boucle = true; 
-    int res; //pour tester les appels système
-
     courant = opendir("/");
     if(courant == NULL){
         perror("Problème à l'ouverture du répertoire initial.\n");
         exit(EXIT_FAILURE);
     }
+    path_courant = "/";
+    jobs = 0; 
+    ret = 0; 
+    boucle = true; 
 
 
-    while(boucle){
+    /* while(boucle){
         // on affiche l'invite de commande
         prompt(); 
 
         //On parse la ligne de commande rentrée  
         parseur();
 
-    }
+    } */
 
 
     res = closedir(courant);
