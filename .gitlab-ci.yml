@@ -1,0 +1,10 @@
+
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+    - apt-get update -y
+    - apt-get install -y make build-essential
+    - make all
