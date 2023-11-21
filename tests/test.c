@@ -1,5 +1,6 @@
 #include "../lib/env.h"
 #include "../lib/pwd.h"
+#include "../lib/prompt.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
@@ -20,6 +21,20 @@ void test_pwd(){
     pwd();
 }
 
+void test_prompt() {
+    printf("-------------------------TEST PROMPT----------------------------\n");
+    jobs = 0;
+    path_courant = "/";
+    prompt();
+    printf("\n");
+    path_courant = "/court";
+    prompt();
+    printf("\n");
+    path_courant = "/trop/long/pour/etre/affiche/correctement";
+    prompt();
+    printf("\n");
+}
+
 int main(){
     courant = opendir("/");
     if(courant == NULL){
@@ -28,6 +43,7 @@ int main(){
     }
 
     test_pwd();
+    test_prompt();
 
     if((closedir(courant) != 0)){
         write(STDERR_FILENO, "Erreur à la fermeture du répertoire courant.\n", 48);
