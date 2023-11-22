@@ -39,3 +39,7 @@ sources.txt
 *.DS_Store
 Desktop.ini
 Thumbs.db
+
+# Executables
+jsh
+test
