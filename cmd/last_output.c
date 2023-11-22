@@ -1,5 +1,7 @@
 #include "../lib/last_output.h"
+#include "../lib/env.h"
+#include <stdio.h>
 
 void last_output() {
-    //TODO :
+    printf("%d\n", val_retour);
 }

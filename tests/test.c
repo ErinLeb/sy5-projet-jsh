@@ -1,5 +1,6 @@
 #include "../lib/env.h"
 #include "../lib/pwd.h"
+#include "../lib/last_output.h"
 #include "../lib/exit.h"
 #include "../lib/prompt.h"
 #include <stdlib.h>
@@ -20,6 +21,17 @@ void test_pwd(){
 
     path_courant = "nouveau/path/du/nouveau/répertoire/courant";
     pwd();
+}
+
+void test_last_output(){
+    printf("-------------------------TEST ?----------------------------\n");
+    val_retour = 1; 
+    printf("Dernière valeur de retour attendue : 1 ; valeur obtenue : ");
+    last_output();
+
+    val_retour = 27;
+    printf("Dernière valeur de retour attendue : 27 ; valeur obtenue : ");
+    last_output();
 }
 
 void test_exit(){
@@ -62,6 +74,9 @@ int main(){
 
 
     test_pwd();
+    printf("\n\n");
+    
+    test_last_output();
     printf("\n\n");
 
     test_exit();
