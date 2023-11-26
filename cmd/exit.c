@@ -2,15 +2,15 @@
 #include "../lib/env.h"
 #include <stdio.h>
 
-void exit_jsh(){
+int exit_jsh(){
+    return exit_jsh_with_arg(val_retour);
+}
+
+int exit_jsh_with_arg(int val){
     if(jobs != 0){
         printf("Des jobs sont en cours d'exécution ou suspendus.\n");
-        val_retour = 1;
-        return;
+        return 1;
     }
     boucle = false;
-}
-void exit_jsh_with_arg(int val){
-    val_retour = val;
-    exit_jsh();
+    return val;
 }

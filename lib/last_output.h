@@ -2,6 +2,6 @@
 #define LAST_OUTPUT_H
 
 /* Affiche sur la sortie standard la valeur de retour de la dernière commande */
-extern void last_output();
+extern int last_output();
 
 #endif

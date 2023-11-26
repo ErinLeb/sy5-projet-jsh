@@ -5,6 +5,6 @@
 extern int cd();
 
 /*Change le répertoire courant par celui désigné par path */
-extern int cd_with_arg(const char* path);
+extern int cd_with_arg(char* path);
 
 #endif
