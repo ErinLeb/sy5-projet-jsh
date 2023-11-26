@@ -2,6 +2,11 @@
 #include "../lib/env.h"
 #include <stdio.h>
 
-void last_output() {
-    printf("%d\n", val_retour);
+int last_output() {
+    int res = printf("%d\n", val_retour);
+    if(res < 0) {
+        perror("Erreur d'affichage dans last_output.");
+        return 1;
+    }
+    return 0;
 }

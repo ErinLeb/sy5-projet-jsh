@@ -1,11 +1,68 @@
 #include "../lib/cd.h"
+#include "../lib/env.h"
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdio.h>
 
+/**
+ * déplace le répertoire courant vers "$HOME" et met à jour path_courant
+*/
 int cd(){
-    //TODO 
-    return 1;
+    int res = chdir(getenv("HOME"));
+    
+    if(res < 0) {
+        perror("Erreur de déplacement dans cd.\n");
+        return 1;
+    }
+
+    path_precedent = memcpy(path_precedent, path_courant, PATH_MAX + 1);
+    path_courant = getcwd(path_courant, PATH_MAX + 1);
+    
+    if(path_courant == NULL) {
+        perror("Erreur de mise à jour du chemin courant dans cd.\n");
+        return 1;
+    }
+
+    return 0;
 }
 
-int cd_with_arg(const char* arg){
-    //TODO 
-    return 1;
+/**
+ * déplace le répertoire courant vers @param arg et met à jour path_courant
+*/
+int cd_with_arg(char* arg){
+    char *rep_suivant;
+    int res;
+    
+    if(arg[0] == '/') {
+        cd();
+        ++arg;
+    }
+    
+    rep_suivant = strtok(arg,"/");
+    while(rep_suivant != NULL) {
+        if(strcmp(rep_suivant,"-") == 0) {
+            res = chdir(path_precedent);
+        }
+
+        else {
+            res = chdir(rep_suivant);
+        }
+
+        if(res < 0) {
+            perror("Erreur de déplacement dans cd_with_arg.\n");
+            return 1;
+        }
+        rep_suivant = strtok(NULL,"/");
+    }
+
+    path_precedent = memcpy(path_precedent, path_courant, PATH_MAX + 1);
+    path_courant = getcwd(path_courant, PATH_MAX + 1);
+    
+    if(path_courant == NULL || path_precedent == NULL) {
+        perror("Erreur de mise à jour du chemin courant ou précédent dans cd_with_args.\n");
+        return 1;
+    }
+
+    return 0;
 }
