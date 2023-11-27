@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <readline/readline.h>
 
 char * path_courant;
 char * path_precedent;
@@ -55,16 +56,30 @@ void test_exit(){
 
 void test_prompt() {
     printf("-------------------------TEST PROMPT----------------------------\n");
+    path_courant = malloc(sizeof(char) * (PATH_MAX + 1));
+    rl_outstream = stderr;
+    char * p = malloc(sizeof(char) * PROMPT);
+    char * r;
+    p[PROMPT - 1] = '\0';
     jobs = 0;
-    path_courant = "/";
-    prompt();
-    printf("\n");
-    path_courant = "/court";
-    prompt();
-    printf("\n");
-    path_courant = "/trop/long/pour/etre/affiche/correctement";
-    prompt();
-    printf("\n");
+    memmove(path_courant,"/",2);
+    p = prompt(p);
+    r = readline(p);
+    free(r);
+    free(p);
+    memmove(path_courant,"/court",7);
+    p = malloc(sizeof(char) * PROMPT);
+    p = prompt(p);
+    r = readline(p);
+    free(r);
+    free(p);
+    memmove(path_courant,"/trop/long/pour/etre/affiche/correctement",42);
+    p = malloc(sizeof(char) * PROMPT);
+    p = prompt(p);
+    r = readline(p);
+    free(r);
+    free(p);
+    free(path_courant);
 }
 
 int main(){

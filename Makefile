@@ -7,16 +7,16 @@ EXEC=jsh
 all : $(EXEC)
 
 %.o: %.c $(DEPS)
-	$(CC) $(CFLAGS) -o $@ -c $< 
+		$(CC) $(CFLAGS) -o $@ -c $< -lreadline
 
 jsh : main.o $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+		$(CC) $(CFLAGS) -o $@ $^ -lreadline
 
 test : tests/test.o $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+		$(CC) $(CFLAGS) -o $@ $^ -lreadline
 
 clean :
-	rm -rf $(EXEC) *.o
-	rm -rf $(EXEC) *.exe
-	rm -rf $(EXEC) test
-	rm -rf $(EXEC) */*.o
+		rm -rf $(EXEC) *.o
+		rm -rf $(EXEC) *.exe
+		rm -rf $(EXEC) test
+		rm -rf $(EXEC) */*.o

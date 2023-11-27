@@ -1,7 +1,7 @@
 #ifndef PROMPT_H
 #define PROMPT_H
 
-/* Affiche sur la sortie standard le prompt de jsh */
-extern void prompt();
+/* Renvoie le prompt de jsh à afficher sur la sortie erreur*/
+extern char * prompt(char *);
 
 #endif
