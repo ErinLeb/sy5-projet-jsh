@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #define PATH_MAX 4096
+#define PROMPT 52
 
 extern char * path_courant;
 extern char * path_precedent;

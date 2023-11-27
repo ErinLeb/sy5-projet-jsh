@@ -1,10 +1,8 @@
-
 stages:
   - build
 
 build:
+  image: gcc:latest
   stage: build
-  script:
-    - apt-get update -y
-    - apt-get install -y make build-essential
+  script:    
     - make all

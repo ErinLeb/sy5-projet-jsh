@@ -4,14 +4,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <math.h>
 
-#define fmin( x, y )
+int min(int a, int b){
+    if (a<b){
+        return a;
+    }
+    return b;
+}
+
 
 /**
  * affiche un prompt de longeur maximale trente caractères en tronquant éventuellement le chemin vers le répertoire courant
 */
-void prompt(){
+char * prompt(char * prompt){
     char *path;
     int max_length = 26; // longueur maximale du chemin à laquelle on enlève déjà les caractères invariants
     int nb_jobs = jobs;
@@ -24,13 +29,13 @@ void prompt(){
     }
 
     max_length -= jobs_length;
-    path = malloc(sizeof(char) * (fmin(max_length, cur_length) + 1));
+    path = malloc(sizeof(char) * (min(max_length, cur_length) + 1));
     if(path == NULL) {
         perror("Erreur d'allocation prompt");
         exit(EXIT_FAILURE);
     }
     
-    if(max_length > strlen(path_courant)) {
+    if(max_length > cur_length) {
         memcpy(path, path_courant, cur_length);
         path[cur_length] = '\0';
     }
@@ -46,9 +51,8 @@ void prompt(){
         path[max_length] = '\0';
     }
 
-    fprintf(stderr, "\001\033[91m\002[%d]", jobs);
-    fprintf(stderr, "\001\033[32m\002%s", path);
-    fprintf(stderr, "\001\033[00m\002 $");
+    sprintf(prompt,"\001\033[91m\002[%d]\001\033[32m\002%s\001\033[00m\002$ ",jobs, path);
     
     free(path);
+    return prompt;
 }
