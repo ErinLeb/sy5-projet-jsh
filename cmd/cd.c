@@ -31,29 +31,18 @@ int cd(){
  * déplace le répertoire courant vers @param arg et met à jour path_courant
 */
 int cd_with_arg(char* arg){
-    char *rep_suivant;
     int res;
     
-    if(arg[0] == '/') {
-        cd();
-        ++arg;
+    if(strcmp("-", arg) == 0) {
+        res = chdir(path_precedent);
     }
-    
-    rep_suivant = strtok(arg,"/");
-    while(rep_suivant != NULL) {
-        if(strcmp(rep_suivant,"-") == 0) {
-            res = chdir(path_precedent);
-        }
+    else {
+        res = chdir(arg);
+    }
 
-        else {
-            res = chdir(rep_suivant);
-        }
-
-        if(res < 0) {
-            perror("Erreur de déplacement dans cd_with_arg.\n");
-            return 1;
-        }
-        rep_suivant = strtok(NULL,"/");
+    if(res < 0) {
+        perror("Erreur de déplacement dans cd_with_arg.\n");
+        return 1;
     }
 
     path_precedent = memcpy(path_precedent, path_courant, PATH_MAX + 1);
