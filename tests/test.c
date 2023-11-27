@@ -4,6 +4,7 @@
 #include "../lib/exit.h"
 #include "../lib/prompt.h"
 #include "../lib/cd.h"
+#include "../lib/commandes_externes.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
@@ -82,6 +83,23 @@ void test_prompt() {
     free(path_courant);
 }
 
+void test_cmd_ext() {
+    printf("-------------------------TEST CMD_EXT----------------------------\n");
+    chdir(".");
+    char *cmd1[] = {"ls", NULL};
+    val_retour = cmd_ext(cmd1);
+    printf("La valeur de retour actuel devrait être 0, elle est actuellement : %d\n", val_retour);
+    char *cmd2[] = {"echo", "test", NULL};
+    val_retour = cmd_ext(cmd2);
+    printf("La valeur de retour actuel devrait être 0, elle est actuellement : %d\n", val_retour);
+    char *cmd3[] = {"ls", "-lia", NULL};
+    val_retour = cmd_ext(cmd3);
+    printf("La valeur de retour actuel devrait être 0, elle est actuellement : %d\n", val_retour);
+    char *cmd4[] = {"ls", "fichierInexistantASupprimerSinon", "fichierInexistantASupprimerSinon", NULL};
+    val_retour = cmd_ext(cmd4);
+    printf("La valeur de retour actuel devrait être 2, elle est actuellement : %d\n", val_retour);
+}
+
 int main(){
 
     test_pwd();
@@ -96,6 +114,8 @@ int main(){
     test_prompt();
     printf("\n\n");
 
+    test_cmd_ext();
+    printf("\n\n");
 
     return 0;
 }

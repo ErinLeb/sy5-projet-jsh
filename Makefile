@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall
-DEPS= lib/last_output.h lib/cd.h lib/exit.h lib/prompt.h lib/pwd.h lib/parseur.h lib/env.h
-OBJ = cmd/last_output.o cmd/cd.o cmd/exit.o cmd/prompt.o cmd/pwd.o parseur.o 
+DEPS= lib/last_output.h lib/cd.h lib/exit.h lib/prompt.h lib/pwd.h lib/parseur.h lib/commandes_externes.h lib/env.h
+OBJ = cmd/last_output.o cmd/cd.o cmd/exit.o cmd/prompt.o cmd/pwd.o parseur.o cmd/commandes_externes.o parseur.o 
 EXEC=jsh
 
 all : $(EXEC)
