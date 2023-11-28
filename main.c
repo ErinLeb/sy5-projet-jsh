@@ -1,10 +1,14 @@
+#include <stdio.h>
 #include "lib/env.h"
 #include "lib/prompt.h"
 #include "lib/parseur.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
- 
+#include <readline/readline.h>
+#include <readline/history.h>
+
+
 char * path_courant;
 char * path_precedent;
 int jobs;
@@ -36,15 +40,21 @@ int main(int argc, char const *argv[]) {
     boucle = true; 
 
 
-    /* while(boucle){
+    char* ligne_cmd = NULL;
+    char* prompt_char = malloc(sizeof(char) * PROMPT);
+    rl_outstream = stderr;
+    while(boucle){
         // on affiche l'invite de commande
-        prompt(); 
+        prompt_char = prompt(prompt_char); 
 
-        //On parse la ligne de commande rentrée  
-        parseur();
-
-    } */
-
+        //On parse la ligne de commande rentrée 
+         
+        ligne_cmd = readline(prompt_char);
+        add_history(ligne_cmd);
+        parseur(ligne_cmd);
+        free(ligne_cmd);
+    }
+    free(prompt_char);
     free(path_courant);
     free(path_precedent);
     return val_retour;
