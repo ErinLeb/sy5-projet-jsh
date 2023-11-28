@@ -1,22 +1,22 @@
-CC=gcc
-CFLAGS=-Wall
-DEPS= lib/last_output.h lib/cd.h lib/exit.h lib/prompt.h lib/pwd.h lib/parseur.h lib/commandes_externes.h lib/env.h
-OBJ = cmd/last_output.o cmd/cd.o cmd/exit.o cmd/prompt.o cmd/pwd.o parseur.o cmd/commandes_externes.o parseur.o 
-EXEC=jsh
+CC = gcc
+CFLAGS = -Wall -lreadline
+DEPS = lib/last_output.h lib/cd.h lib/exit.h lib/prompt.h lib/pwd.h lib/parseur.h lib/commandes_externes.h lib/env.h
+OBJ = cmd/last_output.o cmd/cd.o cmd/exit.o cmd/prompt.o cmd/pwd.o cmd/commandes_externes.o parseur.o 
+EXEC = jsh
 
 all : $(EXEC)
 
 %.o: %.c $(DEPS)
-		$(CC) $(CFLAGS) -o $@ -c $< -lreadline
+	$(CC) -o $@ -c $< $(CFLAGS)
 
 jsh : main.o $(OBJ)
-		$(CC) $(CFLAGS) -o $@ $^ -lreadline
+	$(CC) -o $@ $^ $(CFLAGS)
 
 test : tests/test.o $(OBJ)
-		$(CC) $(CFLAGS) -o $@ $^ -lreadline
+	$(CC) -o $@ $^ $(CFLAGS)
 
 clean :
-		rm -rf $(EXEC) *.o
-		rm -rf $(EXEC) *.exe
-		rm -rf $(EXEC) test
-		rm -rf $(EXEC) */*.o
+	rm -rf $(EXEC) *.o
+	rm -rf $(EXEC) test
+	rm -rf $(EXEC) jsh
+	rm -rf $(EXEC) */*.o

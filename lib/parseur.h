@@ -5,6 +5,6 @@
 //extern char** cutPath(char *);
 
 /* récupère une ligne de l'entrée standard et appelle la commande y correspondant*/
-extern void  parseur();
+extern void parseur(char *);
 
 #endif

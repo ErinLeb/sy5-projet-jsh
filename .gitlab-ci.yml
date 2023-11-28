@@ -4,5 +4,5 @@ stages:
 build:
   image: gcc:latest
   stage: build
-  script:    
+  script:
     - make all
