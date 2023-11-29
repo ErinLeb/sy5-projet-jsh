@@ -74,22 +74,20 @@ arguments, en tenant compte de la variable d'environnement `PATH`.
 
 ### Commandes internes
 
-`jsh` possède (au moins) les commandes internes suivantes :
+`jsh` possède (au moins) les commandes internes listées ci-dessous. 
+Elles ont comme valeur de retour 0 en cas de succès (à l'exception
+d'`exit`, naturellement), et 1 en cas d'échec.
 
 ##### `pwd`
 
 Affiche la référence physique absolue du répertoire de travail 
 courant.
 
-La valeur de retour est 0 en cas de succès, 1 en cas d'échec.
-
 ##### `cd [ref | -]`
 
 Change de répertoire de travail courant en le répertoire `ref` (s'il
 s'agit d'une référence valide), le précédent répertoire de travail si le
 paramètre est `-`, ou `$HOME` en l'absence de paramètre.
-
-La valeur de retour est 0 en cas de succès, 1 en cas d'échec.
 
 ##### `?`
 
@@ -278,7 +276,7 @@ redirections additionnelles sont autorisées :
 
 - redirection de l'entrée standard de `cmd1` 
 - redirection de la sortie standard de `cmdn`
-- redirection des sorties erreurs des `n` commandes
+- redirection des sorties erreur des `n` commandes
 
 En cas d'échec d'une redirection, la ligne de commande saisie n'est pas
 exécutée, et la valeur de retour est 1.
@@ -296,7 +294,7 @@ d'exécution ou suspendus, après un premier appel à `exit` sans effet, un
 deuxième appel de confirmation, **immédiatement après le premier**,
 provoque cette fois la terminaison de `jsh`; `jsh` doit cependant en
 informer tous les processus des jobs en cours par l'envoi d'un signal
-`SIGHUP`, après avoir relancé les évntuels processus stoppés._
+`SIGHUP`, après avoir relancé les éventuels processus stoppés._
 
 
 ## Modalités de réalisation (et de test)

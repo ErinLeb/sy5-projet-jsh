@@ -1,7 +1,7 @@
 #ifndef PROMPT_H
 #define PROMPT_H
 
-/* Renvoie le prompt de jsh à afficher sur la sortie erreur*/
+/* Renvoie un prompt de longeur maximale trente caractères en tronquant éventuellement le chemin vers le répertoire courant */
 extern char * prompt(char *);
 
 #endif

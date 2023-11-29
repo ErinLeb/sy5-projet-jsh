@@ -1,8 +1,17 @@
 stages:
   - build
+  - test
 
 build:
   image: gcc:latest
   stage: build
   script:
     - make all
+
+test:
+  image: gcc:latest
+  stage: test
+  script:
+    - apt-get update -qy
+    - apt-get install -y valgrind
+    - ./Projet_test.sh

@@ -1,10 +1,10 @@
 #ifndef EXIT_H
 #define EXIT_H
 
-/*Indique au programme qu'on sort du programme avec la valeur de retour de la dernière commande */
+/* Quitte le programme avec la dernière valeur de retour */
 extern int exit_jsh();
 
-/*Indique au programme qu'on sort du programme avec la valeur de retour passée en argument */
+/* Quitte le programme avec la valeur de retour val @param val*/
 extern int exit_jsh_with_arg(int val);
 
 #endif

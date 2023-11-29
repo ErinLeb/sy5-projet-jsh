@@ -9,7 +9,9 @@
 extern char * path_courant;
 extern char * path_precedent;
 extern int jobs;
-extern int val_retour;  /* dernière valeur de retour de la commande exécutée par l'utilisateur */
-extern bool boucle; /* booléen indiquant si on continue d'exécuter jsh*/
+/* dernière valeur de retour de la commande exécutée par l'utilisateur */
+extern int val_retour;  
+/* booléen indiquant si on continue d'exécuter jsh*/
+extern bool boucle; 
 
 #endif
