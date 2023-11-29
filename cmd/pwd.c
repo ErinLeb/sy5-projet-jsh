@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
 int pwd() {
     int res = printf("%s\n", path_courant);
     if(res < 0){

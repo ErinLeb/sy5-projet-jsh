@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+
 int min(int a, int b){
     if (a<b){
         return a;
@@ -13,9 +14,6 @@ int min(int a, int b){
 }
 
 
-/**
- * affiche un prompt de longeur maximale trente caractères en tronquant éventuellement le chemin vers le répertoire courant
-*/
 char * prompt(char * prompt){
     char *path;
     int max_length = 26; // longueur maximale du chemin à laquelle on enlève déjà les caractères invariants
@@ -31,15 +29,15 @@ char * prompt(char * prompt){
     max_length -= jobs_length;
     path = malloc(sizeof(char) * (min(max_length, cur_length) + 1));
     if(path == NULL) {
-        perror("Erreur d'allocation prompt");
+        perror("Erreur d'allocation prompt\n");
         exit(EXIT_FAILURE);
     }
     
     if(max_length > cur_length) {
         memcpy(path, path_courant, cur_length);
         path[cur_length] = '\0';
-    }
-    else {
+    
+    } else {
         for(int i = 0; i < max_length; ++i) {
             if(i < 3) {
                 path[i] = '.';

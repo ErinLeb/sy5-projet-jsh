@@ -5,9 +5,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-/**
- * déplace le répertoire courant vers "$HOME" et met à jour path_courant
-*/
+
 int cd(){
     int res = chdir(getenv("HOME"));
     
@@ -27,9 +25,7 @@ int cd(){
     return 0;
 }
 
-/**
- * déplace le répertoire courant vers @param arg et met à jour path_courant
-*/
+
 int cd_with_arg(char* arg){
     int res;
     
