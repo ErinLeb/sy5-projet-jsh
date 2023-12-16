@@ -10,6 +10,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdbool.h>
+
 
 bool isInt (char * str) {
     if(str == NULL || strlen (str) == 0){
@@ -24,35 +28,10 @@ bool isInt (char * str) {
     return true;
 }
 
-void parseur(char cmd[]){ 
-    if (!cmd){
-        val_retour = exit_jsh();
-        return;
-    }
 
-    char *sep = " ";
-    char *current = strtok(cmd, sep);
-    char** argv = NULL;
-    int argc = 0;
+
+void parseur(int argc, char **argv){ 
     bool cmd_find = false;
-
-
-    while(current != NULL){   
-        argc ++;
-        argv = realloc (argv, argc*sizeof(char*));
-        if (argv == NULL){
-            val_retour = 1;
-            perror("Erreur d'allocation parseur");
-            return;
-        }
-        argv[argc - 1] = current;
-        current = strtok(NULL, sep);
-    }
-
-
-    if (argv == NULL){
-        return;
-    }
 
     if (strcmp(argv[0],"cd") == 0) { 
         cmd_find = true;
@@ -112,4 +91,141 @@ void parseur(char cmd[]){
     }
 
     free(argv);
+}
+
+
+
+void parseur_redirections(char cmd[]){
+    if (!cmd){
+        val_retour = exit_jsh();
+        return;
+    }
+
+    // variables parseur
+    char *sep = " ";
+    char *current = strtok(cmd, sep);
+    char** argv = NULL;
+    int argc = 0;
+
+    // variables redirections
+    int res; 
+    int newfic, oldfic; 
+    int flags; 
+    bool redirection = false; 
+    bool creat = true; // indique si le flag O_CREAT est présent
+    bool changed[3] = {false, false, false}; // descripteurs changés
+
+    while(current != NULL){  
+        // si strtok détecte un symbole >, >>, <, ...
+        // il effectue le chgt de descripteur avec le prochain appel a strtok
+
+        if(strcmp(current, "<") == 0){ // entrée standard
+            redirection = true;
+            changed[0] = true;
+            creat = false;
+            flags = O_RDONLY;
+            oldfic = 0;
+        }
+
+        else if(strcmp(current, ">") == 0){ // sortie standard, échoue si le fichier existe déjà
+            redirection = true;
+            changed[1] = true;
+            flags = O_WRONLY|O_CREAT|O_EXCL;
+            oldfic = 1;
+        }
+
+        else if(strcmp(current, ">|") == 0){ // sortie standard, écrasement
+            redirection = true;
+            changed[1] = true;
+            flags = O_WRONLY|O_CREAT|O_TRUNC;
+            oldfic = 1;
+        }
+
+        else if(strcmp(current, ">>") == 0){ // sortie standard, concaténation
+            redirection = true;
+            changed[1] = true;
+            flags = O_WRONLY|O_CREAT|O_APPEND;
+            oldfic = 1;
+        }
+
+        else if(strcmp(current, "2>") == 0){ // sortie erreur 
+            redirection = true;
+            changed[2] = true;
+            flags = O_WRONLY|O_CREAT|O_EXCL;
+            oldfic = 2;
+        }
+
+        else if(strcmp(current, "2>|") == 0){ // sortie erreur, écrasement
+            redirection = true;
+            changed[2] = true;
+            flags = O_WRONLY|O_CREAT|O_TRUNC;
+            oldfic = 2;
+        }
+
+        else if(strcmp(current, "2>>") == 0){ // sortie erreur, concaténation
+            redirection = true;
+            changed[2] = true;
+            flags = O_WRONLY|O_CREAT|O_APPEND;
+            oldfic = 2;
+        }
+
+        // sinon, il ajoute les éléments à la commande à passer au parseur
+        else{
+            redirection = false;
+            argc ++;
+            argv = realloc (argv, argc*sizeof(char*));
+            if (argv == NULL){
+                val_retour = 1;
+                perror("realloc");
+                return;
+            }
+            argv[argc - 1] = current;
+        }
+
+        if(redirection){
+            char * nom_fic = strtok(NULL, sep);
+            if(creat){
+                newfic = open(nom_fic, flags, 0664);
+
+            }else{
+                newfic = open(nom_fic, flags);
+            }
+            if(newfic == -1){
+                val_retour = 1;
+                perror("open");
+                goto maj_default; 
+                return;
+            }
+
+            res = dup2(newfic, oldfic);
+            if(res < 0){
+                val_retour = 1;
+                perror("dup2");
+                goto maj_default;
+                return;
+            }
+            close(newfic);
+        }
+
+        current = strtok(NULL, sep);
+        creat = true;
+    }
+
+    if (argv == NULL){
+        goto maj_default;
+        return;
+    }
+
+    // On traite la commande
+    parseur(argc, argv);
+
+    goto maj_default;
+
+    // On remet les descripteurs par défaut
+    maj_default:
+    for(int i = 0; i < 3; i++){
+        if(changed[i]){
+            dup2(default_fd[i], i);
+        }
+    }
 }

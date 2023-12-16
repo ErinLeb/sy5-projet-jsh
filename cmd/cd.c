@@ -10,7 +10,7 @@ int cd(){
     int res = chdir(getenv("HOME"));
     
     if(res < 0) {
-        perror("Erreur de déplacement dans cd.\n");
+        perror("Erreur de déplacement dans cd.");
         return 1;
     }
 
@@ -18,7 +18,7 @@ int cd(){
     path_courant = getcwd(path_courant, PATH_MAX + 1);
     
     if(path_courant == NULL) {
-        perror("Erreur de mise à jour du chemin courant dans cd.\n");
+        perror("Erreur de mise à jour du chemin courant dans cd.");
         return 1;
     }
 
@@ -37,7 +37,7 @@ int cd_with_arg(char* arg){
     }
 
     if(res < 0) {
-        perror("Erreur de déplacement dans cd_with_arg.\n");
+        perror("Erreur de déplacement dans cd_with_arg.");
         return 1;
     }
 
@@ -45,7 +45,7 @@ int cd_with_arg(char* arg){
     path_courant = getcwd(path_courant, PATH_MAX + 1);
     
     if(path_courant == NULL || path_precedent == NULL) {
-        perror("Erreur de mise à jour du chemin courant ou précédent dans cd_with_args.\n");
+        perror("Erreur de mise à jour du chemin courant ou précédent dans cd_with_args.");
         return 1;
     }
 

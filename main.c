@@ -7,7 +7,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-
+int default_fd [3];
 char * path_courant;
 char * path_precedent;
 int jobs;
@@ -21,21 +21,26 @@ int main(int argc, char const *argv[]) {
     // initialisation des variables
     res = chdir(".");
     if(res < 0) {
-        perror("Erreur d'initialisation du répertoire courant.\n");
+        perror("Erreur d'initialisation du répertoire courant.");
         exit(EXIT_FAILURE);
     }
+
+    default_fd[0] = dup(STDIN_FILENO);
+    default_fd[1] = dup(STDOUT_FILENO);
+    default_fd[2] = dup(STDERR_FILENO);
+
 
     path_courant = malloc(sizeof(char) * (PATH_MAX + 1));
     path_precedent = malloc(sizeof(char) * (PATH_MAX + 1));
     if(path_courant == NULL || path_precedent == NULL) {
-        perror("Erreur d'allocation des chemins initiaux.\n");
+        perror("Erreur d'allocation des chemins initiaux.");
         exit(EXIT_FAILURE);
     }
 
     path_courant = getcwd(path_courant, PATH_MAX + 1);
     path_precedent = getcwd(path_precedent, PATH_MAX + 1);
     if(path_courant == NULL) {
-        perror("Erreur d'obtention des chemins initiaux.\n");
+        perror("Erreur d'obtention des chemins initiaux.");
         exit(EXIT_FAILURE);
     }
 
@@ -55,7 +60,7 @@ int main(int argc, char const *argv[]) {
          
         ligne_cmd = readline(prompt_char);
         add_history(ligne_cmd);
-        parseur(ligne_cmd);
+        parseur_redirections(ligne_cmd);
         free(ligne_cmd);
     }
 

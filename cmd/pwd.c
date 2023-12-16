@@ -9,7 +9,7 @@
 int pwd() {
     int res = printf("%s\n", path_courant);
     if(res < 0){
-        perror("Problème à l'affichage du path.\n");
+        perror("Problème à l'affichage du path.");
         return 1;
     }
     return 0;
