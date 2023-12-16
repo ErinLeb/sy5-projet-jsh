@@ -29,7 +29,7 @@ char * prompt(char * prompt){
     max_length -= jobs_length;
     path = malloc(sizeof(char) * (min(max_length, cur_length) + 1));
     if(path == NULL) {
-        perror("Erreur d'allocation prompt\n");
+        perror("Erreur d'allocation prompt");
         exit(EXIT_FAILURE);
     }
     

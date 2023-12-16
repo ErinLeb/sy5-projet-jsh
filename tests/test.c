@@ -12,9 +12,11 @@
 #include <string.h>
 #include <readline/readline.h>
 
+//à changer si un test utilise des redirections
+int default_fd [3] = {STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO}; 
 char * path_courant;
 char * path_precedent;
-int jobs = 0; 
+int jobs = 0;
 int val_retour = 0;  
 bool boucle = true;
 
