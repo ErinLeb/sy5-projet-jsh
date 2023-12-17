@@ -87,6 +87,17 @@ void parseur(int argc, char *argv[]){
         }
     }
 
+    if (strcmp(argv[0],"jobs") == 0) { 
+        cmd_find = true;
+        if (argc == 1){
+            val_retour = jobs();
+        }
+        else {
+            val_retour = 1;
+            perror("Trop d'arguments ont été donnés.");
+        }
+    }
+
     if (!cmd_find){
         argv = realloc (argv, (argc+1)*sizeof(char*));
         if (argv == NULL){

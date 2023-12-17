@@ -19,4 +19,7 @@ extern int init_job(int argc, char *argv[]);
 /*Vérifie si les jobs en cours sont terminés et les affiches si c'est le cas*/
 extern void check_jobs_info ();
 
+/*Affiche les informations sur tous les jobs en cours*/
+extern int jobs ();
+
 #endif

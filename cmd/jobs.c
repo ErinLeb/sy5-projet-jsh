@@ -125,3 +125,50 @@ void check_jobs_info()
         }
     }
 }
+
+int jobs()
+{
+    int info_fils;
+    int status; 
+    job *current_job;
+    for (int i = 0; i < cmp_jobs; i++)
+    {
+        current_job = pid_jobs[i];
+        info_fils = waitpid(current_job->pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
+
+        if (info_fils == -1)
+        {
+            perror("waitpid (demande_jobs_info)");
+            return 1;
+        }
+
+        if (info_fils == 0)
+        {
+            fprintf(stderr, "[%i] %i Running        %s\n", current_job->id, current_job->pid, current_job->cmd);
+        }
+        else
+        {
+            if (WIFEXITED(status))
+            {
+                fprintf(stderr, "[%i] %i Done        %s\n", current_job->id, current_job->pid, current_job->cmd);
+                suppresion_job(i);
+                i--;
+            }
+            else if (WIFSIGNALED(status))
+            {
+                fprintf(stderr, "[%i] %i Killed        %s\n", current_job->id, current_job->pid, current_job->cmd);
+                suppresion_job(i);
+                i--;
+            }
+            else if (WIFSTOPPED(status))
+            {
+                fprintf(stderr, "[%i] %i Stopped        %s\n", current_job->id, current_job->pid, current_job->cmd);
+            }
+            else
+            {
+                fprintf(stderr, "[%i] %i Detached        %s\n", current_job->id, current_job->pid, current_job->cmd);
+            }
+        }
+    }
+    return 0;
+}
