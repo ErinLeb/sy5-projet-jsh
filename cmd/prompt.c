@@ -17,7 +17,7 @@ int min(int a, int b){
 char * prompt(char * prompt){
     char *path;
     int max_length = 26; // longueur maximale du chemin à laquelle on enlève déjà les caractères invariants
-    int nb_jobs = jobs;
+    int nb_jobs = cmp_jobs;
     int jobs_length = 1;
     int cur_length = strlen(path_courant);
 
@@ -49,7 +49,7 @@ char * prompt(char * prompt){
         path[max_length] = '\0';
     }
 
-    sprintf(prompt,"\001\033[91m\002[%d]\001\033[32m\002%s\001\033[00m\002$ ",jobs, path);
+    sprintf(prompt,"\001\033[91m\002[%d]\001\033[32m\002%s\001\033[00m\002$ ",cmp_jobs, path);
     
     free(path);
     return prompt;

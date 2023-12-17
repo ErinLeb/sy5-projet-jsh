@@ -5,6 +5,7 @@
 #include "../lib/prompt.h"
 #include "../lib/last_output.h"
 #include "../lib/commandes_externes.h"
+#include "../lib/jobs.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
@@ -16,7 +17,9 @@
 int default_fd [3] = {STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO}; 
 char * path_courant;
 char * path_precedent;
-int jobs = 0;
+int cmp_jobs = 0; 
+job * pid_jobs[NBR_MAX_JOBS];
+bool id_taken[NBR_MAX_JOBS];
 int val_retour = 0;  
 bool boucle = true;
 
@@ -43,11 +46,11 @@ void test_last_output(){
 void test_exit(){
     printf("-------------------------TEST EXIT----------------------------\n");
     printf("Dans la boucle : %d\n", boucle);
-    jobs = 1;
+    cmp_jobs = 1;
     val_retour = exit_jsh();
     printf("Exit avec jobs en cours : %d -- toujours dans la boucle ? %d\n", val_retour, boucle);
 
-    jobs = 0;
+    cmp_jobs = 0;
     val_retour = 0;
     val_retour = exit_jsh();
     printf("Exit (dernière valeur de retour 0) : %d -- toujours dans la boucle ? %d\n", val_retour, boucle);
@@ -64,7 +67,7 @@ void test_prompt() {
     char * p = malloc(sizeof(char) * PROMPT);
     char * r;
     p[PROMPT - 1] = '\0';
-    jobs = 0;
+    cmp_jobs = 0;
     memmove(path_courant,"/",2);
     p = prompt(p);
     r = readline(p);
