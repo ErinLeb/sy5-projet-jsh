@@ -9,7 +9,7 @@ int exit_jsh(){
 
 
 int exit_jsh_with_arg(int val){
-    if(jobs != 0){
+    if(cmp_jobs != 0){
         printf("Des jobs sont en cours d'exécution ou suspendus.");
         return 1;
     }

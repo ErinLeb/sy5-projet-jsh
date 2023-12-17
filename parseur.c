@@ -5,6 +5,7 @@
 #include "lib/parseur.h"    
 #include "lib/last_output.h"
 #include "lib/commandes_externes.h"
+#include "lib/jobs.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,7 +31,13 @@ bool isInt (char * str) {
 
 
 
-void parseur(int argc, char **argv){ 
+void parseur(int argc, char *argv[]){ 
+    if (strcmp(argv[argc-1], "&") == 0){
+        argv[argc - 1] = NULL;
+        val_retour = init_job(argc-1,argv);
+        return;
+    }
+
     bool cmd_find = false;
 
     if (strcmp(argv[0],"cd") == 0) { 
