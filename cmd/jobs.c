@@ -28,19 +28,22 @@ job *new_job(pid_t pid, char *cmd)
 }
 
 /*Méthode qui prend une liste de char* et renvoie leur concaténation*/
-char * concat (int argc, char *argv[]) {
+char *concat(int argc, char *argv[])
+{
     int taille = 0;
-    for (int i = 0 ; i < argc; i++) {
+    for (int i = 0; i < argc; i++)
+    {
         taille += strlen(argv[i]);
     }
-    char* res = malloc (taille + 1);
+    char *res = malloc(taille + 1);
     strcpy(res, "");
-    for (int i = 0 ; i < argc-1; i++) {
-        strcat(res,argv[i]);
-        strcat(res," ");
+    for (int i = 0; i < argc - 1; i++)
+    {
+        strcat(res, argv[i]);
+        strcat(res, " ");
     }
-    strcat(res,argv[argc-1]);
-    return res; 
+    strcat(res, argv[argc - 1]);
+    return res;
 }
 
 int init_job(int argc, char *argv[])
@@ -55,14 +58,14 @@ int init_job(int argc, char *argv[])
 
     if (pid == 0)
     {
-        parseur(argc, argv);
-        exit(0);
+        execvp(argv[0], argv);
+        exit(1);
     }
 
     else
     {
-        pid_jobs[cmp_jobs] = new_job(pid, concat(argc,argv));
-        fprintf(stderr, "[%i] %i Running        %s\n", pid_jobs[cmp_jobs]->id, pid,pid_jobs[cmp_jobs]->cmd);
+        pid_jobs[cmp_jobs] = new_job(pid, concat(argc, argv));
+        fprintf(stderr, "[%i] %i Running        %s\n", pid_jobs[cmp_jobs]->id, pid, pid_jobs[cmp_jobs]->cmd);
         cmp_jobs++;
         return 0;
     }
@@ -106,7 +109,7 @@ void check_jobs_info()
                 suppresion_job(i);
                 i--;
             }
-            else if (WIFSIGNALED (status))
+            else if (WIFSIGNALED(status))
             {
                 fprintf(stderr, "[%i] %i Killed        %s\n", current_job->id, current_job->pid, current_job->cmd);
                 suppresion_job(i);
@@ -129,7 +132,7 @@ void check_jobs_info()
 int jobs()
 {
     int info_fils;
-    int status; 
+    int status;
     job *current_job;
     for (int i = 0; i < cmp_jobs; i++)
     {
@@ -144,29 +147,29 @@ int jobs()
 
         if (info_fils == 0)
         {
-            fprintf(stderr, "[%i] %i Running        %s\n", current_job->id, current_job->pid, current_job->cmd);
+            printf("[%i] %i Running        %s\n", current_job->id, current_job->pid, current_job->cmd);
         }
         else
         {
             if (WIFEXITED(status))
             {
-                fprintf(stderr, "[%i] %i Done        %s\n", current_job->id, current_job->pid, current_job->cmd);
+                printf("[%i] %i Done        %s\n", current_job->id, current_job->pid, current_job->cmd);
                 suppresion_job(i);
                 i--;
             }
             else if (WIFSIGNALED(status))
             {
-                fprintf(stderr, "[%i] %i Killed        %s\n", current_job->id, current_job->pid, current_job->cmd);
+                printf("[%i] %i Killed        %s\n", current_job->id, current_job->pid, current_job->cmd);
                 suppresion_job(i);
                 i--;
             }
             else if (WIFSTOPPED(status))
             {
-                fprintf(stderr, "[%i] %i Stopped        %s\n", current_job->id, current_job->pid, current_job->cmd);
+                printf("[%i] %i Stopped        %s\n", current_job->id, current_job->pid, current_job->cmd);
             }
             else
             {
-                fprintf(stderr, "[%i] %i Detached        %s\n", current_job->id, current_job->pid, current_job->cmd);
+                printf("[%i] %i Detached        %s\n", current_job->id, current_job->pid, current_job->cmd);
             }
         }
     }
