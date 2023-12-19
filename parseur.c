@@ -31,10 +31,16 @@ bool isInt (char * str) {
 
 
 
-void parseur(int argc, char *argv[]){ 
+
+void parseur(int argc, char **argv){ 
     if (strcmp(argv[argc-1], "&") == 0){
+        free(argv[argc - 1]);
         argv[argc - 1] = NULL;
         val_retour = init_job(argc-1,argv);
+        for(int i = 0; i < argc; ++i){
+            free(argv[i]);
+        }
+        free(argv);
         return;
     }
 
@@ -107,13 +113,15 @@ void parseur(int argc, char *argv[]){
         argv[argc] = NULL;
         val_retour = cmd_ext(argv);
     }
-
+    for(int i = 0; i < argc; ++i){
+        free(argv[i]);
+    }
     free(argv);
 }
 
 
 
-void parseur_redirections(char cmd[]){
+void parseur_redirections(char *cmd){
     if (!cmd){
         val_retour = exit_jsh();
         return;
@@ -191,13 +199,14 @@ void parseur_redirections(char cmd[]){
         else{
             redirection = false;
             argc ++;
-            argv = realloc (argv, argc*sizeof(char*));
+            argv = realloc(argv, argc * sizeof(char *));
             if (argv == NULL){
                 val_retour = 1;
                 perror("realloc");
                 return;
             }
-            argv[argc - 1] = current;
+            argv[argc - 1] = malloc(sizeof(char) * (strlen(current) + 1));
+            strcpy(argv[argc - 1], current);
         }
 
         if(redirection){
