@@ -6,12 +6,14 @@
 #include "../lib/last_output.h"
 #include "../lib/commandes_externes.h"
 #include "../lib/jobs.h"
+#include "../lib/kill.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <readline/readline.h>
+#include <signal.h>
 
 //à changer si un test utilise des redirections
 int default_fd [3] = {STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO}; 
@@ -105,7 +107,21 @@ void test_cmd_ext() {
     printf("valeur attendue : 2, valeur obtenue : %d\n", val_retour);
 }
 
+void test_kill() {
+    printf("-------------------------TEST KILL----------------------------\n");
+    val_retour = kill_proc(getpid(), SIGTERM);
+    printf("valeur attendue : 0, valeur obtenue: %d\n", val_retour);
+    val_retour = kill_term_proc(getpid());
+    printf("valeur attendue : 0, valeur obtenue: %d\n", val_retour);
+    val_retour = kill_proc(getpid(), 80);
+    printf("valeur attendue : 1, valeur obtenue: %d\n", val_retour);
+}
+
 int main(){
+    struct sigaction ignore;
+    memset(&ignore, 0, sizeof(struct sigaction));
+    ignore.sa_handler = SIG_IGN;
+    sigaction(SIGTERM, &ignore, NULL);
 
     test_pwd();
     printf("\n\n");
@@ -120,6 +136,9 @@ int main(){
     printf("\n\n");
 
     test_cmd_ext();
+    printf("\n\n");
+
+    test_kill();
     printf("\n\n");
 
     return 0;

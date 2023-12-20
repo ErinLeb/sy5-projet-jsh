@@ -6,6 +6,7 @@
 #include "lib/last_output.h"
 #include "lib/commandes_externes.h"
 #include "lib/jobs.h"
+#include "lib/kill.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,15 +21,17 @@ bool isInt (char * str) {
     if(str == NULL || strlen (str) == 0){
         return false;
     }
-    while (*str != '\0'){
-        if (!(isdigit (*str))){
+    int i = 0;
+    while (str[i] != '\0'){
+        if (isdigit (str[i]) || (i == 0 && str[i] == '-')){
+            i++;
+        }
+        else {
             return false;
         }
-        str++;
     }
     return true;
 }
-
 
 
 
@@ -92,7 +95,6 @@ void parseur(int argc, char **argv){
             perror("Argument(s) donné(s) invalide(s).");
         }
     }
-
     if (strcmp(argv[0],"jobs") == 0) { 
         cmd_find = true;
         if (argc == 1){
@@ -101,6 +103,52 @@ void parseur(int argc, char **argv){
         else {
             val_retour = 1;
             perror("Trop d'arguments ont été donnés.");
+        }
+    }
+    if (strcmp(argv[0], "kill") == 0) {
+        cmd_find = true;
+        
+        if (argc < 2 || argc > 3) {
+            val_retour = 1;
+            perror("Nombre d'arguments invalide.");
+        }
+        else if (argc == 2 && argv[1][0] == '%') {
+            char *num_job = &argv[1][1];
+            if (!isInt(num_job)) {
+                val_retour = 1;
+                perror("Job invalide.");
+            }
+            else {
+                val_retour = kill_term_job(atoi(num_job));
+            }
+        }
+        else if (argc == 2 && isInt(argv[1])) {
+            val_retour = kill_term_proc(atoi(argv[1]));
+        }
+        else if (argc == 3 && argv[1][0] == '-' && argv[2][0] == '%') {
+            char *num_job = &argv[2][1];
+            char *sig = &argv[1][1];
+            if (!isInt(num_job) || !isInt(sig)) {
+                val_retour = 1;
+                perror("Job ou signal invalide.");
+            }
+            else {
+                val_retour = kill_job(atoi(num_job), atoi(sig));
+            }
+        }
+        else if (argc == 3 && argv[1][0] == '-' && isInt(argv[2])) {
+            char *sig = &argv[1][1];
+            if (!isInt(sig)) {
+                val_retour = 1;
+                perror("Signal invalide.");
+            }
+            else {
+                val_retour = kill_proc(atoi(argv[2]), atoi(sig));
+            }
+        }
+        else {
+            perror("Argument(s) invalide(s).");
+            val_retour = 1;
         }
     }
 

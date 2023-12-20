@@ -30,7 +30,7 @@ char *concat(int argc, char *argv[]){
     for (int i = 0; i < argc; i++){
         taille += strlen(argv[i]);
     }
-    char* res = malloc ((taille + argc) * sizeof(char));
+    char *res = malloc((taille + argc) * sizeof(char));
     strcpy(res, "");
     for (int i = 0; i < argc - 1; i++){
         strcat(res, argv[i]);
