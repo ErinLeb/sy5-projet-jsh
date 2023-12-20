@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <string.h>
+#include <signal.h>
 
 int default_fd [3];
 char * path_courant;
@@ -54,7 +56,7 @@ int main(int argc, char const *argv[]) {
     char* prompt_char = malloc(sizeof(char) * PROMPT);
 
     rl_outstream = stderr;
-
+    
 
     // boucle principale
     while(boucle){
