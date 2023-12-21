@@ -7,11 +7,13 @@
 #include <unistd.h>
 #include <stdio.h>
 
+
 job *new_job(pid_t pid, char *cmd){
     job *res = malloc(sizeof(int) + sizeof(pid_t) + (strlen(cmd) + 1) * sizeof(char) + sizeof(bool) + sizeof(enum JobStatus));
     if (res == NULL){
         perror("malloc (new_job)");
     }
+
     int id;
     for (id = 0; id < NBR_MAX_JOBS; id++){
         if (!id_taken[id]){
@@ -27,6 +29,7 @@ job *new_job(pid_t pid, char *cmd){
     return res;
 }
 
+
 void suppresion_job(int i){
     job *current_job = pid_jobs[i];
     id_taken[(current_job->id) - 1] = false;
@@ -37,6 +40,7 @@ void suppresion_job(int i){
     }
     cmp_jobs--;
 }
+
 
 void set_status(job * j, int status){
     if (WIFCONTINUED(status)){
@@ -55,6 +59,7 @@ void set_status(job * j, int status){
        j->jobstatus =  JOB_DETACHED;
     }
 }
+
 
 void check_jobs_info(){
     job *current_job;
@@ -105,13 +110,14 @@ void check_jobs_info(){
     }
 }
 
+
 int jobs(){
     job *current_job;
     int info_waitpid;
     int status;
+
     for (int i = 0; i < cmp_jobs; i++){
         current_job = pid_jobs[i];
-
         info_waitpid = waitpid(current_job->pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
 
         if (info_waitpid != 0){

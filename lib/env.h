@@ -8,7 +8,7 @@
 #define PROMPT 52
 #define NBR_MAX_JOBS 1024
 
-//descripteurs par défaut 
+// Entrée et sorties par défaut 
 extern int default_fd [3];
 
 extern char * path_courant;

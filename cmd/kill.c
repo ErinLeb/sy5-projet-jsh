@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <stdio.h>
 
+
 int kill_proc(pid_t pid, int sig) {
     int res = kill(pid, sig);
     if(res < 0) {
@@ -24,9 +25,11 @@ int kill_proc(pid_t pid, int sig) {
     return 0;
 }
 
+
 int kill_term_proc(pid_t pid) {
     return kill_proc(pid, SIGTERM);
 }
+
 
 int kill_job(int job, int sig) {
     if(id_taken[job - 1]){
@@ -37,6 +40,7 @@ int kill_job(int job, int sig) {
                 break;
             }
         }
+
         int res = kill(-job_pid, sig);
         if(res < 0) {
             if(errno == EINVAL) {
@@ -57,6 +61,7 @@ int kill_job(int job, int sig) {
     perror("Le job n'existe pas.");
     return 1;
 }
+
 
 int kill_term_job(int job) {
     return kill_job(job, SIGTERM);
