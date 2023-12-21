@@ -94,16 +94,16 @@ void test_cmd_ext() {
     printf("-------------------------TEST CMD_EXT----------------------------\n");
     chdir(".");
     char *cmd1[] = {"ls", NULL};
-    val_retour = cmd_ext(cmd1);
+    val_retour = cmd_ext(1,cmd1,false);
     printf("valeur attendue : 0, valeur obtenue : %d\n", val_retour);
     char *cmd2[] = {"echo", "test", NULL};
-    val_retour = cmd_ext(cmd2);
+    val_retour = cmd_ext(2,cmd2,false);
     printf("valeur attendue : 0, valeur obtenue: %d\n", val_retour);
     char *cmd3[] = {"ls", "-lia", NULL};
-    val_retour = cmd_ext(cmd3);
+    val_retour = cmd_ext(2,cmd3,false);
     printf("valeur attendue : 0, valeur obtenue : %d\n", val_retour);
     char *cmd4[] = {"ls", "fichierInexistantASupprimerSinon", "fichierInexistantASupprimerSinon", NULL};
-    val_retour = cmd_ext(cmd4);
+    val_retour = cmd_ext(3,cmd4,false);
     printf("valeur attendue : 2, valeur obtenue : %d\n", val_retour);
 }
 

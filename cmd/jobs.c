@@ -8,7 +8,10 @@
 #include <stdio.h>
 
 job *new_job(pid_t pid, char *cmd){
-    job *res = malloc(sizeof(int) + sizeof(pid_t) + (strlen(cmd) + 1) * sizeof(char));
+    job *res = malloc(sizeof(int) + sizeof(pid_t) + (strlen(cmd) + 1) * sizeof(char) + sizeof(bool) + sizeof(enum JobStatus));
+    if (res == NULL){
+        perror("malloc (new_job)");
+    }
     int id;
     for (id = 0; id < NBR_MAX_JOBS; id++){
         if (!id_taken[id]){
@@ -20,47 +23,8 @@ job *new_job(pid_t pid, char *cmd){
     res->pid = pid;
     res->cmd = malloc((strlen(cmd) + 1) * sizeof(char));
     strcpy(res->cmd, cmd);
-    setpgid(pid, 0);
+    res->afficher_save = false;
     return res;
-}
-
-/*Méthode qui prend une liste de char* et renvoie leur concaténation*/
-char *concat(int argc, char *argv[]){
-    int taille = 0;
-    for (int i = 0; i < argc; i++){
-        taille += strlen(argv[i]);
-    }
-    char *res = malloc((taille + argc) * sizeof(char));
-    strcpy(res, "");
-    for (int i = 0; i < argc - 1; i++){
-        strcat(res, argv[i]);
-        strcat(res, " ");
-    }
-    strcat(res, argv[argc - 1]);
-    return res;
-}
-
-int init_job(int argc, char *argv[]){
-    pid_t pid = fork();
-
-    if (pid == -1){
-        perror("Erreur lors du fork d'initialisation du jobs.");
-        return 1;
-    }
-
-    if (pid == 0){
-        execvp(argv[0], argv);
-        exit(1);
-    }
-
-    else{
-        char * cmd = concat(argc,argv);
-        pid_jobs[cmp_jobs] = new_job(pid, cmd);
-        free(cmd);
-        fprintf(stderr, "[%i] %i Running        %s\n", pid_jobs[cmp_jobs]->id, pid,pid_jobs[cmp_jobs]->cmd);
-        cmp_jobs++;
-        return 0;
-    }
 }
 
 void suppresion_job(int i){
@@ -74,33 +38,63 @@ void suppresion_job(int i){
     cmp_jobs--;
 }
 
+void set_status(job * j, int status){
+    if (WIFCONTINUED(status)){
+        j->jobstatus = JOB_RUNNING;
+    }
+    else if (WIFEXITED(status)){
+        j->jobstatus = JOB_DONE;
+    }
+    else if (WIFSTOPPED(status)){
+        j->jobstatus = JOB_STOPPED;
+    }
+    else if (WIFSIGNALED(status)){
+        j->jobstatus = JOB_KILLED;
+    }
+    else{
+       j->jobstatus =  JOB_DETACHED;
+    }
+}
+
 void check_jobs_info(){
     job *current_job;
     int status;
-    int info_fils;
+    int info_waitpid;
 
     for (int i = 0; i < cmp_jobs; i++){
         current_job = pid_jobs[i];
-        info_fils = waitpid(current_job->pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
 
-        if (info_fils == -1){
-            perror("waitpid (check_jobs_info)");
-            return;
+        if (current_job -> afficher_save) {
+            current_job -> afficher_save = false;
+            info_waitpid = 1;
+        }
+        else {
+            info_waitpid = waitpid(current_job->pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
+            if (info_waitpid == -1){
+                perror("waitpid (check_jobs_info)");
+                return;
+            }
+            if (info_waitpid != 0){
+                set_status (current_job, status);
+            }
         }
 
-        if (info_fils != 0){
-            if (WIFEXITED(status)){
+        if (info_waitpid != 0){
+            if (current_job -> jobstatus == JOB_RUNNING){
+                fprintf(stderr, "[%i] %i Running        %s\n", current_job->id, current_job->pid, current_job->cmd);
+            }
+            else if (current_job -> jobstatus == JOB_STOPPED){
+                fprintf(stderr, "[%i] %i Stopped        %s\n", current_job->id, current_job->pid, current_job->cmd);
+            }
+            else if (current_job -> jobstatus == JOB_DONE){
                 fprintf(stderr, "[%i] %i Done        %s\n", current_job->id, current_job->pid, current_job->cmd);
                 suppresion_job(i);
                 i--;
             }
-            else if (WIFSIGNALED(status)){
+            else if (current_job -> jobstatus == JOB_KILLED){
                 fprintf(stderr, "[%i] %i Killed        %s\n", current_job->id, current_job->pid, current_job->cmd);
                 suppresion_job(i);
                 i--;
-            }
-            else if (WIFSTOPPED(status)){
-                fprintf(stderr, "[%i] %i Stopped        %s\n", current_job->id, current_job->pid, current_job->cmd);
             }
             else{
                 fprintf(stderr, "[%i] %i Detached        %s\n", current_job->id, current_job->pid, current_job->cmd);
@@ -112,38 +106,38 @@ void check_jobs_info(){
 }
 
 int jobs(){
-    int info_fils;
-    int status;
     job *current_job;
+    int info_waitpid;
+    int status;
     for (int i = 0; i < cmp_jobs; i++){
         current_job = pid_jobs[i];
-        info_fils = waitpid(current_job->pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
 
-        if (info_fils == -1){
-            perror("waitpid (demande_jobs_info)");
-            return 1;
+        info_waitpid = waitpid(current_job->pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
+
+        if (info_waitpid != 0){
+            set_status (current_job, status);
         }
-
-        if (info_fils == 0){
+        
+        if (current_job -> jobstatus == JOB_RUNNING){
             printf("[%i] %i Running        %s\n", current_job->id, current_job->pid, current_job->cmd);
         }
+        else if (current_job -> jobstatus == JOB_DONE){
+            printf("[%i] %i Done        %s\n", current_job->id, current_job->pid, current_job->cmd);
+            suppresion_job(i);
+            i--;
+        }
+        else if (current_job -> jobstatus == JOB_STOPPED){
+            printf("[%i] %i Stopped        %s\n", current_job->id, current_job->pid, current_job->cmd);
+        }
+        else if (current_job -> jobstatus == JOB_KILLED){
+            printf("[%i] %i Killed        %s\n", current_job->id, current_job->pid, current_job->cmd);
+            suppresion_job(i);
+            i--;
+        } 
         else{
-            if (WIFEXITED(status)){
-                printf("[%i] %i Done        %s\n", current_job->id, current_job->pid, current_job->cmd);
-                suppresion_job(i);
-                i--;
-            }
-            else if (WIFSIGNALED(status)){
-                printf("[%i] %i Killed        %s\n", current_job->id, current_job->pid, current_job->cmd);
-                suppresion_job(i);
-                i--;
-            }
-            else if (WIFSTOPPED(status)){
-                printf("[%i] %i Stopped        %s\n", current_job->id, current_job->pid, current_job->cmd);
-            }
-            else{
-                printf("[%i] %i Detached        %s\n", current_job->id, current_job->pid, current_job->cmd);
-            }
+            printf("[%i] %i Detached        %s\n", current_job->id, current_job->pid, current_job->cmd);
+            suppresion_job(i);
+            i--;
         }
     }
     return 0;
