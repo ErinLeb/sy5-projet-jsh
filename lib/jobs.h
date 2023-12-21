@@ -12,8 +12,7 @@ enum JobStatus {
     JOB_DETACHED = 4
 };
 
-struct job
-{
+struct job {
     int id;
     pid_t pid;
     char * cmd;
@@ -24,10 +23,10 @@ struct job
 
 typedef struct job job;
 
-/*Vérifie si les jobs en cours sont terminés et les affiches si c'est le cas*/
+/* Vérifie si les jobs en cours sont terminés et les affiche si c'est le cas*/
 extern void check_jobs_info ();
 
-/*Affiche les informations sur tous les jobs en cours*/
+/* Affiche les informations sur tous les jobs en cours */
 extern int jobs ();
 
 extern job *new_job(pid_t pid, char *cmd);
@@ -35,4 +34,5 @@ extern job *new_job(pid_t pid, char *cmd);
 extern void suppresion_job(int i);
 
 extern void set_status(job *, int);
+
 #endif

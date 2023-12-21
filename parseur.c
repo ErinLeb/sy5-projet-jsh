@@ -36,10 +36,9 @@ bool isInt (char * str) {
 
 
 void parseur(int argc, char **argv){ 
-
     bool cmd_find = false;
 
-    if (strcmp(argv[0],"cd") == 0) { 
+    if (strcmp(argv[0], "cd") == 0) { 
         cmd_find = true;
         if (argc == 1){
             val_retour = cd();
@@ -51,7 +50,7 @@ void parseur(int argc, char **argv){
         }
     }
 
-    if (strcmp(argv[0],"?") == 0) { 
+    if (strcmp(argv[0], "?") == 0) { 
         cmd_find = true;
         if (argc == 1){
             val_retour = last_output();
@@ -62,7 +61,7 @@ void parseur(int argc, char **argv){
         }
     }
 
-    if (strcmp(argv[0],"pwd") == 0) {  
+    if (strcmp(argv[0], "pwd") == 0) {  
         cmd_find = true;
         if (argc == 1){
             val_retour = pwd();
@@ -72,7 +71,8 @@ void parseur(int argc, char **argv){
             perror("Trop d'arguments ont été donnés.");
         }
     }
-    if (strcmp(argv[0],"exit") == 0) {  
+
+    if (strcmp(argv[0], "exit") == 0) {  
         cmd_find = true;
         if (argc == 1){
             val_retour = exit_jsh();
@@ -85,7 +85,8 @@ void parseur(int argc, char **argv){
             perror("Argument(s) donné(s) invalide(s).");
         }
     }
-    if (strcmp(argv[0],"jobs") == 0) { 
+
+    if (strcmp(argv[0], "jobs") == 0) { 
         cmd_find = true;
         if (argc == 1){
             val_retour = jobs();
@@ -95,6 +96,7 @@ void parseur(int argc, char **argv){
             perror("Trop d'arguments ont été donnés.");
         }
     }
+
     if (strcmp(argv[0], "kill") == 0) {
         cmd_find = true;
         
@@ -141,6 +143,7 @@ void parseur(int argc, char **argv){
             val_retour = 1;
         }
     }
+
     if (!cmd_find){
         bool bg;
         if (strcmp(argv[argc-1], "&") == 0){
@@ -161,7 +164,6 @@ void parseur(int argc, char **argv){
     }
     free(argv);
 }
-
 
 
 void parseur_redirections(char *cmd){
