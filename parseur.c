@@ -36,16 +36,6 @@ bool isInt (char * str) {
 
 
 void parseur(int argc, char **argv){ 
-    if (strcmp(argv[argc-1], "&") == 0){
-        free(argv[argc - 1]);
-        argv[argc - 1] = NULL;
-        val_retour = init_job(argc-1,argv);
-        for(int i = 0; i < argc; ++i){
-            free(argv[i]);
-        }
-        free(argv);
-        return;
-    }
 
     bool cmd_find = false;
 
@@ -151,18 +141,23 @@ void parseur(int argc, char **argv){
             val_retour = 1;
         }
     }
-
     if (!cmd_find){
-        argv = realloc (argv, (argc+1)*sizeof(char*));
-        if (argv == NULL){
-            val_retour = 1;
-            perror("Erreur d'allocation parseur");
+        bool bg;
+        if (strcmp(argv[argc-1], "&") == 0){
+            argc--;
+            argv[argc] = NULL;
+            bg = true;
         }
-        argv[argc] = NULL;
-        val_retour = cmd_ext(argv);
-    }
-    for(int i = 0; i < argc; ++i){
-        free(argv[i]);
+        else {
+            argv = realloc (argv, (argc+1)*sizeof(char*));
+            if (argv == NULL){
+                val_retour = 1;
+                perror("Erreur d'allocation parseur");
+            }
+            argv[argc] = NULL;
+            bg = false;
+        }
+        val_retour = cmd_ext(argc,argv, bg);
     }
     free(argv);
 }
@@ -253,8 +248,7 @@ void parseur_redirections(char *cmd){
                 perror("realloc");
                 return;
             }
-            argv[argc - 1] = malloc(sizeof(char) * (strlen(current) + 1));
-            strcpy(argv[argc - 1], current);
+            argv[argc - 1] = current;
         }
 
         if(redirection){
