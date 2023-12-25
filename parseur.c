@@ -40,6 +40,7 @@ void parseur(int argc, char **argv){
 
     if (strcmp(argv[0], "cd") == 0) { 
         cmd_find = true;
+        appel_exit = false;
         if (argc == 1){
             val_retour = cd();
         }if (argc == 2){
@@ -52,6 +53,7 @@ void parseur(int argc, char **argv){
 
     if (strcmp(argv[0], "?") == 0) { 
         cmd_find = true;
+        appel_exit = false;
         if (argc == 1){
             val_retour = last_output();
         }
@@ -63,6 +65,7 @@ void parseur(int argc, char **argv){
 
     if (strcmp(argv[0], "pwd") == 0) {  
         cmd_find = true;
+        appel_exit = false;
         if (argc == 1){
             val_retour = pwd();
         }
@@ -88,6 +91,7 @@ void parseur(int argc, char **argv){
 
     if (strcmp(argv[0], "jobs") == 0) { 
         cmd_find = true;
+        appel_exit = false;
         if (argc == 1){
             val_retour = jobs();
         }
@@ -99,6 +103,7 @@ void parseur(int argc, char **argv){
 
     if (strcmp(argv[0], "kill") == 0) {
         cmd_find = true;
+        appel_exit = false;
         
         if (argc < 2 || argc > 3) {
             val_retour = 1;
@@ -146,6 +151,7 @@ void parseur(int argc, char **argv){
 
     if (!cmd_find){
         bool bg;
+        appel_exit = false;
         if (strcmp(argv[argc-1], "&") == 0){
             argc--;
             argv[argc] = NULL;

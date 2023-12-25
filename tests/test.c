@@ -24,6 +24,7 @@ job * pid_jobs[NBR_MAX_JOBS];
 bool id_taken[NBR_MAX_JOBS];
 int val_retour = 0;  
 bool boucle = true;
+bool appel_exit = false;
 
 void test_pwd(){
     printf("-------------------------TEST PWD----------------------------\n");
