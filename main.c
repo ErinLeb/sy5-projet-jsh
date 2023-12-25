@@ -17,6 +17,7 @@ job * pid_jobs[NBR_MAX_JOBS];
 bool id_taken[NBR_MAX_JOBS];
 int val_retour;
 bool boucle;
+bool appel_exit;
 
 int res; //pour tester les appels système
 
@@ -50,12 +51,22 @@ int main(int argc, char const *argv[]) {
 
     cmp_jobs = 0;
     val_retour = 0; 
-    boucle = true; 
+    boucle = true;
+    appel_exit = false; 
 
     char* ligne_cmd = NULL;
     char* prompt_char = malloc(sizeof(char) * PROMPT);
 
     rl_outstream = stderr;
+
+    struct sigaction ignore = {0};
+    ignore.sa_handler = SIG_IGN;
+    sigaction(SIGINT, &ignore, NULL);
+    sigaction(SIGTERM, &ignore, NULL);
+    sigaction(SIGQUIT, &ignore, NULL);
+    sigaction(SIGTTOU, &ignore, NULL);
+    sigaction(SIGTTIN, &ignore, NULL);
+    sigaction(SIGTSTP, &ignore, NULL);
     
 
     // boucle principale

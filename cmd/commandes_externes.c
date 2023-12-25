@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <signal.h>
 
 
 char * concat (int argc, char *argv[]) {
@@ -35,6 +36,11 @@ int cmd_ext(int argc, char* argv[], bool bg){
     }
 
     if (pid == 0){
+        struct sigaction def = {0};
+        def.sa_handler = SIG_DFL;
+        for(int i = 1; i < NSIG; ++i){
+            sigaction(i, &def, NULL);
+        }
         setpgid(0, 0);
         execvp(argv[0], argv);
         exit (1);

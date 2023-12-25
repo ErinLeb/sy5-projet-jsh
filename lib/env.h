@@ -19,6 +19,7 @@ extern bool id_taken[];
 /* dernière valeur de retour de la commande exécutée par l'utilisateur */
 extern int val_retour;  
 /* booléen indiquant si on continue d'exécuter jsh*/
-extern bool boucle; 
+extern bool boucle;
+extern bool appel_exit;
 
 #endif
