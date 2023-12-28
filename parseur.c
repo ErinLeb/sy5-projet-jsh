@@ -287,17 +287,17 @@ void parseur_redirections(char *cmd){
                 fd_fifo_ecriture = open(name_fifo, O_WRONLY);
                 if(fd_fifo_ecriture < 0){
                     perror("ouverture WR (substitution)");
-                    return -1;
+                    exit(-1);
                 } 
                 res = dup2(fd_fifo_ecriture, 1);
                 if(res < 0){
                     perror("dup2 substitution");
-                    return -1;
+                    exit(-1);
                 }
                 res = close(fd_fifo_ecriture);
                 if(res < 0){
                     perror("fermeture WR (substitution)");
-                    return -1;
+                    exit(-1);
                 }
                 parseur_redirections(cmd2); // on suppose que la sortie standard est toujours le fifo
                 free(cmd2);
