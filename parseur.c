@@ -198,9 +198,9 @@ void parseur_redirections(char *cmd){
     bool changed[3] = {false, false, false}; // descripteurs changés
     
     //Variables substitution
-    char * name_fifo;
+    bool substitution = false;
+    char name_fifo[100];
     int fd_fifo_ecriture;
-    int fd_fifo_lecture;
 
 
     while(current != NULL){  
@@ -259,13 +259,19 @@ void parseur_redirections(char *cmd){
 
         // cmd1 <( cmd2 )
         else if(strcmp(current, "<(") == 0){
-            //TODO : et s'il y a cmd1 <( cmd2 <( cmd3)) ?
-            name_fifo = "tmp"; //TODO: change name
-            if(mkfifo(name_fifo, 0777) != 0){
-                val_retour = 1;
+            substitution = true;
+            //TODO : convention de nommage
+            int tmp_fifo = 0;
+            sprintf(name_fifo, "%d", tmp_fifo);
+
+            while(mkfifo(name_fifo, 0777) != 0){
+                tmp_fifo++;
+                sprintf(name_fifo, "%d", tmp_fifo);
+
+                /*val_retour = 1;
                 perror("mkfifo (parseur_redirections)");
                 goto maj_default;
-                return;            
+                return;*/            
             }
 
             char *cmd2 = malloc(PATH_MAX * sizeof(char)); // TODO : change PATH_MAX to strlen(cmd)
@@ -276,7 +282,7 @@ void parseur_redirections(char *cmd){
                 return;
             }
             current = strtok(NULL, sep);
-            while(strcmp(current, ")") != 0){
+            while(strcmp(current, ")") != 0){ //TODO : s'arrête à la première parenthèse fermante
                 strcat(cmd2, current);
                 strcat(cmd2, " ");
                 current = strtok(NULL, sep);
@@ -378,5 +384,5 @@ void parseur_redirections(char *cmd){
             dup2(default_fd[i], i);
         }
     }
-    unlink(name_fifo);
+    if(substitution) unlink(name_fifo);
 }
