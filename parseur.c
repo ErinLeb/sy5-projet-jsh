@@ -176,6 +176,7 @@ void parseur(int argc, char **argv){
 }
 
 
+//TODO : move in `redirections.c` ?
 void parseur_redirections(char *cmd){
     if (!cmd){
         val_retour = exit_jsh();
