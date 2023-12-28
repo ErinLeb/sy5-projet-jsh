@@ -15,6 +15,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <errno.h>
 
 
 bool isInt (char * str) {
@@ -166,7 +170,9 @@ void parseur(int argc, char **argv){
             argv[argc] = NULL;
             bg = false;
         }
-        val_retour = cmd_ext(argc,argv, bg);
+        printf("cmd_ext\n");
+        val_retour = cmd_ext(argc, argv, bg);
+        printf("retour cmd_ext\n");
     }
     free(argv);
 }
@@ -191,6 +197,11 @@ void parseur_redirections(char *cmd){
     bool redirection = false; 
     bool creat = true; // indique si le flag O_CREAT est présent
     bool changed[3] = {false, false, false}; // descripteurs changés
+    bool substitution = false;
+    char * name_fifo;
+    int fd_fifo_ecriture;
+    int fd_fifo_lecture;
+
 
     while(current != NULL){  
         // si strtok détecte un symbole >, >>, <, ...
@@ -246,6 +257,102 @@ void parseur_redirections(char *cmd){
             oldfic = 2;
         }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+        // cmd1 <( cmd2 )
+        else if(strcmp(current, "<(") == 0){
+            //TODO : et s'il y a cmd1 <( cmd2 <( cmd3)) ?
+            name_fifo = "tmp"; //TODO: change name
+                printf("pid = %d", getpid());
+            if(mkfifo(name_fifo, 0777) != 0){
+                val_retour = 1;
+                perror("mkfifo (parseur_redirections)");
+                goto maj_default;
+                return;            
+            }
+
+            char *cmd2;
+            cmd2 = malloc(PATH_MAX*sizeof(char));
+            if(cmd2 == NULL){
+                perror("malloc cmd2");
+                val_retour = 1;
+                goto maj_default;
+                return;
+            }
+            current = strtok(NULL, sep);
+            while(strcmp(current, ")") != 0){
+                strcat(cmd2, current);
+                strcat(cmd2, " ");
+                current = strtok(NULL, sep);
+            }
+            res = fork();
+
+            if(res == 0){ // cmd2
+                printf("fils = %d\n", getpid());
+                fd_fifo_ecriture = open(name_fifo, O_WRONLY); 
+                printf("apres ouverture fifo fils\n");
+                printf("HELLO ?\n");
+                sleep(3);
+                printf("je suis révéillé\n");
+                dup2(fd_fifo_ecriture, 1);
+                close(fd_fifo_ecriture);
+                fprintf(stderr, "avant parseur fils, cmd2 = %s \n", cmd2);                
+                parseur_redirections(cmd2); //on suppose que la sortie standard est toujours le fifo
+                free(cmd2);
+                fprintf(stderr, "retour parseur fils\n");
+                close(fd_fifo_ecriture);                
+                exit(val_retour);
+            }else{ // cmd1
+                printf("pere\n");
+                free(cmd2);
+                fd_fifo_lecture = open(name_fifo, O_RDONLY);
+                //close(fd_fifo_lecture);
+                printf("apres ouverture fifo pere\n");
+                int status;
+                printf("pid du fils : %d\n", res);
+                res = waitpid(res, &status, 0); // on attend la fin de cmd2
+                if(res < 0){
+                    val_retour = 1;
+                    perror("waitpid (parseur_redirections)");
+                    goto maj_default;
+                    return;
+                }
+                printf("waitpid fini\n");
+                if (!WIFEXITED(status)){
+                    val_retour = 1;
+                    perror("cmd2 pas terminé");
+                    goto maj_default;
+                    return;
+                }
+                // name_fifo contient le résultat de cmd2
+                argc ++;
+                argv = realloc(argv, argc * sizeof(char *));
+                printf("realloc\n");
+                if (argv == NULL){
+                    val_retour = 1;
+                    perror("realloc (parseur_redirections)");
+                    goto maj_default;
+                    return;
+                }
+                argv[argc - 1] = name_fifo; //le nom du flot est passé en argument
+                printf("fin du tour\n");
+            }
+        }else if(strcmp(current, ")") == 0){
+            /*if(!substitution){
+                val_retour = 1;
+                perror("mauvais parenthésage");
+                goto maj_default;
+                return;
+            }
+            substitution = false;*/
+            printf("%d break\n", getpid());
+            break;
+        }
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
         // sinon, il ajoute les éléments à la commande à passer au parseur
         else{
             redirection = false;
@@ -254,8 +361,10 @@ void parseur_redirections(char *cmd){
             if (argv == NULL){
                 val_retour = 1;
                 perror("realloc");
+                goto maj_default;
                 return;
             }
+            printf("current = %s\n", current);
             argv[argc - 1] = current;
         }
 
@@ -294,7 +403,14 @@ void parseur_redirections(char *cmd){
     }
 
     // On traite la commande
+    printf("argc = %d\n", argc);
+    for(int i = 0; i<argc; i++){
+        printf("%s ", argv[i]);
+    }
+    printf("\n");
+    printf("debut parseur \n");
     parseur(argc, argv);
+    printf("fin parseur \n");
 
     goto maj_default;
 
@@ -305,4 +421,6 @@ void parseur_redirections(char *cmd){
             dup2(default_fd[i], i);
         }
     }
+    close(fd_fifo_lecture);
+    unlink(name_fifo);
 }
