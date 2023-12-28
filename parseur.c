@@ -305,33 +305,6 @@ void parseur_redirections(char *cmd){
                 exit(val_retour);
             }else{ // cmd1
                 free(cmd2);
-                fd_fifo_lecture = open(name_fifo, O_RDONLY|O_NONBLOCK);
-                if(fd_fifo_lecture < 0){
-                    val_retour = 1; 
-                    perror("ouverture RD (substitution)");
-                    goto maj_default;
-                    return;
-                }
-                int status;
-                res = waitpid(res, &status, 0); // on attend la fin de cmd2
-                if(res < 0){ //TODO : on veut aussi retourner 1 si le fils s'est mal exécuté (check status)
-                    val_retour = 1;
-                    perror("waitpid (substitution)");
-                    goto maj_default;
-                    return;
-                }
-                if (!WIFEXITED(status)){
-                    val_retour = 1;
-                    perror("cmd2 pas terminé");
-                    goto maj_default;
-                    return;
-                }
-                if(WEXITSTATUS(status) == -1){
-                    val_retour = 1; 
-                    perror("fail ecriture substitution");
-                    goto maj_default;
-                    return;
-                }
                 // name_fifo contient le résultat de cmd2
                 argc ++;
                 argv = realloc(argv, argc * sizeof(char *));
@@ -405,6 +378,5 @@ void parseur_redirections(char *cmd){
             dup2(default_fd[i], i);
         }
     }
-    close(fd_fifo_lecture);
     unlink(name_fifo);
 }
