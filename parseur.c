@@ -245,8 +245,9 @@ void parseur_redirections(char *cmd){
             flags = O_WRONLY|O_CREAT|O_APPEND;
             oldfic = 2;
         }
-         // cmd1 | cmd2
-        else if(strcmp(current, "|") == 0){
+
+        else if(strcmp(current, "|") == 0){ // pipe
+            redirection = false;
             int fd[2];
             pipe(fd);
             res = fork();
