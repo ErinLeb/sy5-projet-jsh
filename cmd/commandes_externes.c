@@ -41,12 +41,12 @@ int cmd_ext(int argc, char* argv[], bool bg){
         for(int i = 1; i < NSIG; ++i){
             sigaction(i, &def, NULL);
         }
-        setpgid(0, 0);
         execvp(argv[0], argv);
         exit (1);
     }
 
     else {
+        setpgid(pid, pid);
         int status;
         int info_fils;
         char * cmd = concat(argc, argv);
@@ -61,6 +61,9 @@ int cmd_ext(int argc, char* argv[], bool bg){
         
         } 
         else {
+            tcsetpgrp(0,pid);
+            tcsetpgrp(1,pid);
+            tcsetpgrp(2,pid);
             info_fils = waitpid(pid, &status, WUNTRACED);
 
             if (info_fils == -1){
@@ -75,6 +78,9 @@ int cmd_ext(int argc, char* argv[], bool bg){
                 current_job -> afficher_save = true;
                 set_status(current_job, status);
             }
+            tcsetpgrp(0,getpid());
+            tcsetpgrp(1,getpid());
+            tcsetpgrp(2,getpid());
         }
         return WEXITSTATUS(status);
     }
