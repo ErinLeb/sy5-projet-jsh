@@ -249,7 +249,13 @@ void parseur_redirections(char *cmd){
         else if(strcmp(current, "|") == 0){ // pipe
             redirection = false;
             int fd[2];
-            pipe(fd);
+            res = pipe(fd);
+            if(res < 0){
+                perror("pipe");
+                val_retour = 1;
+                goto maj_default;
+                return;
+            }
             res = fork();
             if(res == 0){
                 res = close(fd[0]);
@@ -360,6 +366,7 @@ void parseur_redirections(char *cmd){
     maj_default:
     for(int i = 0; i < 3; i++){
         if(changed[i]){
+            close(i);
             dup2(default_fd[i], i);
         }
     }
