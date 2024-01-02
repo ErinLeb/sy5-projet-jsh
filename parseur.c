@@ -366,8 +366,16 @@ void parseur_redirections(char *cmd){
     maj_default:
     for(int i = 0; i < 3; i++){
         if(changed[i]){
-            close(i);
-            dup2(default_fd[i], i);
+            res = close(i);
+            if(res < 0){
+                perror("close");
+                exit(1);
+            }
+            res = dup2(default_fd[i], i);
+            if(res < 0){
+                perror("close");
+                exit(1);
+            }
         }
     }
-}
+}   
