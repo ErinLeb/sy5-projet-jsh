@@ -252,15 +252,51 @@ void parseur_redirections(char *cmd){
             pipe(fd);
             res = fork();
             if(res == 0){
-                close(fd[0]);
-                dup2(fd[1], 1);
-                close(fd[1]);
+                res = close(fd[0]);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("close");
+                    goto maj_default;
+                    return;
+                }
+                res = dup2(fd[1], 1);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("dup2");
+                    goto maj_default;
+                    return;
+                }
+                res = close(fd[1]);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("close");
+                    goto maj_default;
+                    return;
+                }
                 parseur(argc, argv);
                 exit(val_retour);
             }else{
-                close(fd[1]);
-                dup2(fd[0], 0);
-                close(fd[0]);
+                res = close(fd[1]);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("close");
+                    goto maj_default;
+                    return;
+                }
+                res = dup2(fd[0], 0);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("dup2");
+                    goto maj_default;
+                    return;
+                }
+                res = close(fd[0]);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("close");
+                    goto maj_default;
+                    return;
+                }
                 changed[0] = true;
                 //on remet argc et argv à 0
                 argc = 0;

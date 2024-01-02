@@ -9,7 +9,7 @@
 
 
 job *new_job(pid_t pid, char *cmd){
-    job *res = malloc(sizeof(int) + sizeof(pid_t) + (strlen(cmd) + 1) * sizeof(char) + sizeof(bool) + sizeof(enum JobStatus));
+    job *res = malloc(sizeof(job));
     if (res == NULL){
         perror("malloc (new_job)");
     }
