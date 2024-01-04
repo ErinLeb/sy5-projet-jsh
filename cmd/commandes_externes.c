@@ -28,6 +28,7 @@ char * concat (int argc, char *argv[]) {
 
 
 int cmd_ext(int argc, char* argv[], bool bg){
+    int res;
     pid_t pid = fork();
 
     if (pid == -1){
@@ -55,6 +56,11 @@ int cmd_ext(int argc, char* argv[], bool bg){
         int info_fils;
         char * cmd = concat(argc, argv);
         job * current_job = new_job(pid, cmd);
+        res = setpgid(pid, pid);
+        if(res != 0){
+            perror("Erreur setpgid");
+            return 1;
+        }
         pid_jobs[cmp_jobs] = current_job;
         free(cmd);
         cmp_jobs++;
