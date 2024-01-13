@@ -7,6 +7,8 @@
 #include "lib/commandes_externes.h"
 #include "lib/jobs.h"
 #include "lib/kill.h"
+#include "lib/fg.h"
+#include "lib/bg.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -150,6 +152,41 @@ void parseur(int argc, char **argv){
         else {
             perror("Argument(s) invalide(s).");
             val_retour = 1;
+        }
+    }
+
+    if(strcmp(argv[0], "fg") == 0){
+        appel_exit = false;
+        cmd_find = true;
+        
+        if(argc != 2){
+            perror("Nombre d'arguments invalide");
+            val_retour = 1;
+        }
+        char *num_job = &argv[1][1];
+        if(argv[1][0] != '%' || !isInt(num_job)){
+            perror("Argument invalide");
+            val_retour = 1;
+        }
+        else{
+            val_retour = fg(atoi(num_job));
+        }
+    }
+
+    if(strcmp(argv[0], "bg") == 0){
+        appel_exit = false;
+        cmd_find = true;
+        if(argc != 2){
+            perror("Nombre d'arguments invalide.");
+            val_retour = 1;
+        }
+        char *num_job = &argv[1][1];
+        if(argv[1][0] != '%' || !isInt(num_job)){
+            perror("Arguments invalides.");
+            val_retour = 1;
+        }
+        else{
+            val_retour = bg(atoi(num_job));
         }
     }
 
