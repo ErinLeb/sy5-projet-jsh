@@ -235,7 +235,8 @@ void parseur_redirections(char *cmd){
     
     //Variables substitution
     bool substitution = false;
-    char name_fifo[100];
+    char *name_fifo;
+    int tmp_fifo = 0;
     int fd_fifo_ecriture;
 
 
@@ -296,15 +297,21 @@ void parseur_redirections(char *cmd){
         // cmd1 <( cmd2 )
         else if(strcmp(current, "<(") == 0){
             substitution = true;
-            int tmp_fifo = 0;
-            sprintf(name_fifo, "%d", tmp_fifo);
-
-            while(mkfifo(name_fifo, 0777) != 0){
-                tmp_fifo++;
-                sprintf(name_fifo, "%d", tmp_fifo);        
+            // On alloue le bon nombre de caractères au nom du tube.
+            int dizaine = 1;
+            while(tmp_fifo / 10 > 0){
+                ++dizaine;
             }
+            name_fifo = malloc(sizeof(char) * (dizaine + 1));
+            sprintf(name_fifo, "%d", tmp_fifo);
+            mkfifo(name_fifo,0777);
+            tmp_fifo++;
 
-            char *cmd2 = malloc(PATH_MAX * sizeof(char)); // TODO : change PATH_MAX to strlen(cmd)
+            // Réécriture de strcat
+            char *cmd2 = malloc(sizeof(char));
+            int index = 0;
+            int len_cmd2 = 0;
+            int len_current;
             if(cmd2 == NULL){
                 perror("malloc cmd2");
                 val_retour = 1;
@@ -312,12 +319,26 @@ void parseur_redirections(char *cmd){
                 return;
             }
             current = strtok(NULL, sep);
-            while(strcmp(current, ")") != 0){ //TODO : s'arrête à la première parenthèse fermante
-                strcat(cmd2, current);
-                strcat(cmd2, " ");
+            while(strcmp(current, ")") != 0){
+                len_current = strlen(current);
+                len_cmd2 += len_current + 1;
+                cmd2 = realloc(cmd2, sizeof(char) * len_cmd2);
+                if(cmd2 == NULL){
+                    perror("realloc cmd2");
+                    val_retour = 1;
+                    goto maj_default;
+                    return;
+                }
+                for(int i = 0; i < len_current; ++i){
+                    cmd2[i + index] = current[i];
+                }
+                cmd2[len_current + index] = ' ';
+                index = len_cmd2;
                 current = strtok(NULL, sep);
             }
+            cmd2[len_cmd2 - 1] = '\0';
 
+            // Exécution des commandes
             res = fork();
 
             if(res == 0){ // cmd2
@@ -350,7 +371,7 @@ void parseur_redirections(char *cmd){
                     goto maj_default;
                     return;
                 }
-                argv[argc - 1] = name_fifo; //le nom du flot est passé en argument
+                argv[argc - 1] = name_fifo;
             }
         }
 
@@ -414,5 +435,8 @@ void parseur_redirections(char *cmd){
             dup2(default_fd[i], i);
         }
     }
-    if(substitution) unlink(name_fifo);
+    if(substitution){
+        unlink(name_fifo);
+        free(name_fifo);
+    }
 }
