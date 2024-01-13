@@ -27,13 +27,7 @@ char * concat (int argc, char *argv[]) {
 }
 
 
-int cmd_ext(int argc, char* argv[], bool bg){
-    pid_t pid = fork();
-
-    if (pid == -1){
-        perror ("Erreur lors du fork cmd_ext.");
-        return 1;
-    }
+int cmd_ext(int argc, char* argv[], bool bg, pid_t pid){
 
     if (pid == 0){
         struct sigaction def = {0};

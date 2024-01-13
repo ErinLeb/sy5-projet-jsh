@@ -194,7 +194,16 @@ void parseur(int argc, char **argv, bool is_bg){
             perror("Erreur d'allocation parseur");
         }
         argv[argc] = NULL;
-        val_retour = cmd_ext(argc, argv, is_bg);
+
+        pid_t pid = fork();
+
+        if (pid == -1){
+            perror ("Erreur lors du fork cmd_ext.");
+            val_retour = 1;
+        }
+        else {
+            val_retour = cmd_ext(argc, argv, is_bg, pid);
+        }
     }
     free(argv);
 }
@@ -317,14 +326,14 @@ void parseur_redirections(char *cmd, bool bg){
                 goto maj_default;
                 return;
             }
-            res = fork();
-            if(res < 0 ){
+            pid_t pid  = fork();
+            if(pid < 0 ){
                 perror("fork pipe");
                 val_retour = 1;
                 goto maj_default;
                 return;
             }
-            if(res == 0){
+            if(pid == 0){
                 res = close(fd[0]);
                 if(res < 0){
                     val_retour = 1;
@@ -347,9 +356,10 @@ void parseur_redirections(char *cmd, bool bg){
                     return;
                 }
                 changed[1] = true;
-                parseur(argc, argv, bg);
+                val_retour = cmd_ext(argc, argv, bg, pid);
                 exit(val_retour);
             }else{
+                //cmd_ext(argc, argv, bg, pid);
                 res = close(fd[1]);
                 if(res < 0){
                     val_retour = 1;
