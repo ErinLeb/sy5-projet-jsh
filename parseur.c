@@ -176,7 +176,6 @@ void parseur(int argc, char **argv){
 }
 
 
-//TODO : move in `redirections.c` ?
 void parseur_redirections(char *cmd){
     if (!cmd){
         val_retour = exit_jsh();
@@ -260,18 +259,12 @@ void parseur_redirections(char *cmd){
         // cmd1 <( cmd2 )
         else if(strcmp(current, "<(") == 0){
             substitution = true;
-            //TODO : convention de nommage
             int tmp_fifo = 0;
             sprintf(name_fifo, "%d", tmp_fifo);
 
             while(mkfifo(name_fifo, 0777) != 0){
                 tmp_fifo++;
-                sprintf(name_fifo, "%d", tmp_fifo);
-
-                /*val_retour = 1;
-                perror("mkfifo (parseur_redirections)");
-                goto maj_default;
-                return;*/            
+                sprintf(name_fifo, "%d", tmp_fifo);        
             }
 
             char *cmd2 = malloc(PATH_MAX * sizeof(char)); // TODO : change PATH_MAX to strlen(cmd)
