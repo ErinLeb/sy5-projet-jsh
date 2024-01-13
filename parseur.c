@@ -326,6 +326,7 @@ void parseur_redirections(char *cmd, bool bg){
                 goto maj_default;
                 return;
             }
+
             pid_t pid  = fork();
             if(pid < 0 ){
                 perror("fork pipe");
@@ -333,6 +334,7 @@ void parseur_redirections(char *cmd, bool bg){
                 goto maj_default;
                 return;
             }
+
             if(pid == 0){
                 res = close(fd[0]);
                 if(res < 0){
@@ -356,8 +358,13 @@ void parseur_redirections(char *cmd, bool bg){
                     return;
                 }
                 changed[1] = true;
+                argv = realloc (argv, (argc+1)*sizeof(char*));
+                if (argv == NULL){
+                    val_retour = 1;
+                    perror("Erreur d'allocation parseur");
+                }
+                argv[argc] = NULL;
                 val_retour = cmd_ext(argc, argv, bg, pid);
-                exit(val_retour);
             }else{
                 //cmd_ext(argc, argv, bg, pid);
                 res = close(fd[1]);
