@@ -239,7 +239,7 @@ void parseur_redirections(char *cmd, bool bg){
     // variables parseur
     char *sep = " ";
     char *current = strtok(cmd, sep);
-    char** argv = NULL;
+    char** argv = malloc(sizeof(char *));
     int argc = 0;
 
     // variables redirections
@@ -371,7 +371,8 @@ void parseur_redirections(char *cmd, bool bg){
                 changed[0] = true;
                 //on remet argc et argv à 0
                 argc = 0;
-                argv = NULL;
+                free(argv);
+                argv = malloc(sizeof(char *));
             }
         }
 
