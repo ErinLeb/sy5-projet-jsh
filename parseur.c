@@ -37,7 +37,7 @@ bool isInt (char * str) {
 
 
 
-void parseur(int argc, char **argv){ 
+void parseur(int argc, char **argv, bool is_bg){ 
     bool cmd_find = false;
 
     if (strcmp(argv[0], "cd") == 0) { 
@@ -187,34 +187,55 @@ void parseur(int argc, char **argv){
     }
 
     if (!cmd_find){
-        bool bg;
         appel_exit = false;
-        if (strcmp(argv[argc-1], "&") == 0){
-            argc--;
-            argv[argc] = NULL;
-            bg = true;
+        argv = realloc (argv, (argc+1)*sizeof(char*));
+        if (argv == NULL){
+            val_retour = 1;
+            perror("Erreur d'allocation parseur");
         }
-        else {
-            argv = realloc (argv, (argc+1)*sizeof(char*));
-            if (argv == NULL){
-                val_retour = 1;
-                perror("Erreur d'allocation parseur");
-            }
-            argv[argc] = NULL;
-            bg = false;
-        }
-        val_retour = cmd_ext(argc,argv, bg);
+        argv[argc] = NULL;
+        val_retour = cmd_ext(argc, argv, is_bg);
     }
     free(argv);
 }
 
 
-void parseur_redirections(char *cmd){
+void is_bg(char *cmd){
     if (!cmd){
         val_retour = exit_jsh();
         return;
     }
 
+    bool bg;
+    int i = -1;
+    char c; 
+    int length = strlen(cmd);
+
+    if(length == 0){ 
+        parseur_redirections(cmd, false);
+        return;
+    }
+
+    do{
+        i++;
+        c = cmd[length - 1 - i]; 
+    }while(i < length - 1 && c == ' ');
+
+    if(c == '&'){
+        bg = true;
+        char new_cmd[length];
+        strcpy(new_cmd, cmd);
+        new_cmd[length - 1 - i] = ' ';
+        parseur_redirections(new_cmd, bg);
+    
+    }else{
+        bg = false;
+        parseur_redirections(cmd, bg);
+    }
+}
+
+    
+void parseur_redirections(char *cmd, bool bg){
     // variables parseur
     char *sep = " ";
     char *current = strtok(cmd, sep);
@@ -294,6 +315,12 @@ void parseur_redirections(char *cmd){
                 return;
             }
             res = fork();
+            if(res < 0 ){
+                perror("fork pipe");
+                val_retour = 1;
+                goto maj_default;
+                return;
+            }
             if(res == 0){
                 res = close(fd[0]);
                 if(res < 0){
@@ -316,7 +343,8 @@ void parseur_redirections(char *cmd){
                     goto maj_default;
                     return;
                 }
-                parseur(argc, argv);
+                changed[1] = true;
+                parseur(argc, argv, bg);
                 exit(val_retour);
             }else{
                 res = close(fd[1]);
@@ -395,7 +423,7 @@ void parseur_redirections(char *cmd){
     }
 
     // On traite la commande
-    parseur(argc, argv);
+    parseur(argc, argv, bg);
 
     goto maj_default;
 
