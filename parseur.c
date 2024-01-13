@@ -205,6 +205,9 @@ void is_bg(char *cmd){
         val_retour = exit_jsh();
         return;
     }
+    if(strcmp(cmd, "") == 0){
+        return;
+    }
 
     bool bg;
     int i = -1;
