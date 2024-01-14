@@ -107,12 +107,13 @@ int set_status(job * j,bool bg){
                 killed ++;
                 done ++;  
                 j->status_proc[i] = JOB_KILLED;
+                j->exitedstatus = WEXITSTATUS(status);
             }
             else if (WIFEXITED(status)){ //done
                 done ++;
                 j->status_proc[i] = JOB_DONE; 
+                j->exitedstatus = WEXITSTATUS(status);
             }
-                //j->exitedstatus = WEXITSTATUS(status);
             
             else if (WIFSTOPPED(status)){ //stopped
                 stopped ++;
