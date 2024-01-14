@@ -102,7 +102,6 @@ int set_status(job * j,bool bg){
             status_changed = false;
         }
         else {
-        
             if (WIFSIGNALED(status)){ //killed
                 killed ++;
                 done ++;  
@@ -117,6 +116,7 @@ int set_status(job * j,bool bg){
             
             else if (WIFSTOPPED(status)){ //stopped
                 stopped ++;
+                running++;
                 j->status_proc[i] = JOB_STOPPED;
             }else {
                 running ++;
@@ -125,6 +125,9 @@ int set_status(job * j,bool bg){
         }
     }
 
+    if(!status_changed){
+        return 0;
+    }
 
     if(done == j->nb_proc && killed > 0){
         if (j->jobstatus != JOB_KILLED){
@@ -140,7 +143,7 @@ int set_status(job * j,bool bg){
     // else if(done == j->nb_proc){
     //     j->jobstatus = JOB_DETACHED;
     // }
-    else if(stopped > 0 && running == 0){
+    else if(stopped == running && stopped > 0){
         if (j->jobstatus != JOB_STOPPED){
             status_changed = true;
             j->jobstatus = JOB_STOPPED;
@@ -209,29 +212,28 @@ int jobs(){
     for (int i = 0; i < cmp_jobs; i++){
         current_job = jobs_suivis[i];
         
-        if(set_status(current_job,true) > 0){
-            if (current_job -> jobstatus == JOB_RUNNING){
-                printf("[%i] %i Running        %s\n", current_job->id, current_job->pgid, current_job->cmd);
-            }
-            else if (current_job -> jobstatus == JOB_DONE){
-                printf("[%i] %i Done        %s\n", current_job->id, current_job->pgid, current_job->cmd);
-                suppresion_job(i);
-                i--;
-            }
-            else if (current_job -> jobstatus == JOB_STOPPED){
-                printf("[%i] %i Stopped        %s\n", current_job->id, current_job->pgid, current_job->cmd);
-            }
-            else if (current_job -> jobstatus == JOB_KILLED){
-                printf("[%i] %i Killed        %s\n", current_job->id, current_job->pgid, current_job->cmd);
-                suppresion_job(i);
-                i--;
-            } 
-            else{
-                printf("[%i] %i Detached        %s\n", current_job->id, current_job->pgid, current_job->cmd);
-                suppresion_job(i);
-                i--;
-            }
-        }       
+        set_status(current_job, true);
+        if (current_job -> jobstatus == JOB_RUNNING){
+            printf("[%i] %i Running        %s\n", current_job->id, current_job->pgid, current_job->cmd);
+        }
+        else if (current_job -> jobstatus == JOB_DONE){
+            printf("[%i] %i Done        %s\n", current_job->id, current_job->pgid, current_job->cmd);
+            suppresion_job(i);
+            i--;
+        }
+        else if (current_job -> jobstatus == JOB_STOPPED){
+            printf("[%i] %i Stopped        %s\n", current_job->id, current_job->pgid, current_job->cmd);
+        }
+        else if (current_job -> jobstatus == JOB_KILLED){
+            printf("[%i] %i Killed        %s\n", current_job->id, current_job->pgid, current_job->cmd);
+            suppresion_job(i);
+            i--;
+        } 
+        else{
+            printf("[%i] %i Detached        %s\n", current_job->id, current_job->pgid, current_job->cmd);
+            suppresion_job(i);
+            i--;
+        }           
     }
     return 0;
 }
