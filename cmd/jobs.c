@@ -22,7 +22,7 @@ void add_proc_to_job(pid_t pid, pid_t pgid){
 }
 
 
-job *new_job(pid_t pid, pid_t pgid, char *cmd){
+job *new_job(pid_t pid, char *cmd){
     job *res = malloc(sizeof(job));
     if (res == NULL){
         perror("malloc (new_job)");
@@ -36,7 +36,8 @@ job *new_job(pid_t pid, pid_t pgid, char *cmd){
         }
     }
     res->id = id + 1;
-    res->pgid = pgid;
+    res->exitedstatus = 0;
+    res->pgid = pid;
     res->nb_proc = 1;
     res->pid_proc = malloc(sizeof(pid_t));
     res->pid_proc[0] = pid;
@@ -60,66 +61,72 @@ void suppresion_job(int i){
 }
 
 /**si le statut n'a pas changé, renvoie 0, sinon renvoie 1*/
-int set_status(job * j){
+int set_status(job * j,bool bg){
     int info_wait;
     int status;
     int pid;
     bool status_changed = false;
     
-    bool running = true;
-    bool done = true;
-    bool stopped = true;
-    bool killed = false;
+    int running = 0;
+    int done = 0;
+    int stopped = 0;
+    int killed = 0;
 
     for(int i = 0; i < j->nb_proc; i++){
-        printf("hello");
+        //puts("hello");
         pid = j->pid_proc[i];
-        info_wait = waitpid(pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
+        if (bg){
+            info_wait = waitpid(pid, &status, WCONTINUED | WNOHANG | WUNTRACED);
+        }
+        else{
+            info_wait = waitpid(pid, &status, WUNTRACED);
+        }
         if (info_wait == -1){
             perror("waitpid (set_status)");
-            return WEXITSTATUS(status);
+            return -1;
         }
-        if(info_wait == 0){
-            continue;
-        }
-        status_changed = true;
-
+        
         if (WIFCONTINUED(status)){ //running
-            printf("run");
-            done = false;
-            stopped = false;
+            running ++;
         }
         else if (WIFEXITED(status)){ //done
-        printf("done");
-            running = false;
+            j->exitedstatus = WEXITSTATUS(status);
+            done ++;
         }
         else if (WIFSTOPPED(status)){ //stopped
-            printf("stop");
-            running = false;
-            done = false;
+            stopped ++;
         }
         else if (WIFSIGNALED(status)){ //killed
-            killed = true;
-        }
-        else{ //detached
-        printf("autre");
-            running = false;
-            done = false;
-            stopped = false;
+            //printf("signal : %i pid : %i\n",WTERMSIG(status),pid);
+            killed ++;
         }
     }
     
-    printf("here\n");
-    if(running){
-        j->jobstatus = JOB_RUNNING;
-    }else if(done){
-        j->jobstatus = JOB_DONE;
-    }else if(stopped){
-        j->jobstatus = JOB_STOPPED;
-    }else if(killed){
-        j->jobstatus = JOB_KILLED;
-    }else{
-        j->jobstatus = JOB_DETACHED;
+    //printf("here\n");
+    if(done == j->nb_proc){
+        if (j->jobstatus != JOB_DONE){
+            status_changed = true;
+            j->jobstatus = JOB_DONE;
+        }
+    }else if(running == 0 && stopped == 0 && done + killed == j->nb_proc && killed > 0){
+        if (j->jobstatus != JOB_KILLED){
+            status_changed = true;
+            j->jobstatus = JOB_KILLED;
+        }
+    }
+    // else if(done == j->nb_proc){
+    //     j->jobstatus = JOB_DETACHED;
+    // }
+    else if(stopped > 0 && running == 0){
+        if (j->jobstatus != JOB_STOPPED){
+            status_changed = true;
+            j->jobstatus = JOB_STOPPED;
+        }
+    }else {
+        if (j->jobstatus != JOB_RUNNING){
+            status_changed = true;
+            j->jobstatus = JOB_RUNNING;
+        }
     }
 
     if(status_changed){
@@ -135,14 +142,17 @@ void check_jobs_info(){
     for (int i = 0; i < cmp_jobs; i++){
         current_job = jobs_suivis[i];
 
-        
-        if(set_status(current_job) > 0){
-            //TODO
-            /**
-             * if (current_job -> afficher_save) {
-                current_job -> afficher_save = false;
-                }
-            */
+        int res = 1;
+
+        if (current_job -> afficher_save) {
+            current_job -> afficher_save = false;
+        }
+        else {
+            res = set_status(current_job,true);
+        }
+
+        if(res > 0){
+
             if (current_job -> jobstatus == JOB_RUNNING){
                 fprintf(stderr, "[%i] %i Running        %s\n", current_job->id, current_job->pgid, current_job->cmd);
             }
@@ -176,7 +186,7 @@ int jobs(){
     for (int i = 0; i < cmp_jobs; i++){
         current_job = jobs_suivis[i];
         
-        if(set_status(current_job) > 0){
+        if(set_status(current_job,true) > 0){
             if (current_job -> jobstatus == JOB_RUNNING){
                 printf("[%i] %i Running        %s\n", current_job->id, current_job->pgid, current_job->cmd);
             }
