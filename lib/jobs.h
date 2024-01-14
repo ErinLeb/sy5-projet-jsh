@@ -33,6 +33,7 @@ extern void check_jobs_info ();
 
 /* Affiche les informations sur tous les jobs en cours */
 extern int jobs ();
+extern int jobs_t ();
 
 extern void add_proc_to_job(pid_t pid, pid_t pgid);
 

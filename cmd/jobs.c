@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 
 void add_proc_to_job(pid_t pid, pid_t pgid){
@@ -213,21 +216,21 @@ void print_child(int target_pid,int space) {
         int MAX_SIZE_PID = 1024;
         int MAX_CHILD_JOBS = 1024;
         char buf[MAX_CHILD_JOBS*MAX_SIZE_PID];
-        char ** pid_fils = NULL;
+        int* pid_fils = NULL;
         read(children_file,buf,MAX_CHILD_JOBS*MAX_SIZE_PID);
         char *pid = strtok(buf, " ");
         int nombre_fils = 0;
 
         while (pid != NULL) {
-            pid_fils = realloc(pid_fils, (nombre_fils + 1) * sizeof(char *));
-            pid_fils[nombre_fils] = strcpy(pid_fils[nombre_fils],pid);
+            pid_fils = realloc(pid_fils, (nombre_fils + 1) * sizeof(int));
+            pid_fils[nombre_fils] = atoi(pid);
             nombre_fils++;
 
             pid = strtok(NULL, " ");
         }
 
         for (int i = 0 ; i < nombre_fils; i++) {
-            int child_pid = atoi(pid_fils[i]);
+            int child_pid = pid_fils[i];
 
             char info_path[512];
             snprintf(info_path, sizeof(info_path), "/proc/%d/status", child_pid);
@@ -319,7 +322,42 @@ int jobs(){
             printf("[%i] %i Detached        %s\n", current_job->id, current_job->pgid, current_job->cmd);
             suppresion_job(i);
             i--;
-        }           
+        }        
+    }
+    return 0;
+}
+
+
+int jobs_t(){
+
+    job *current_job;
+
+    for (int i = 0; i < cmp_jobs; i++){
+        current_job = jobs_suivis[i];
+        for (int j = 0; j < current_job->nb_proc; j++){
+            if (current_job -> status_proc[j] == JOB_RUNNING){
+                printf("[%i] %i Running        %s\n", current_job->id, current_job->pid_proc[j], current_job->cmd_proc[j]);
+            }
+            else if (current_job -> status_proc[j] == JOB_DONE){
+                printf("[%i] %i Done        %s\n",current_job->id, current_job->pid_proc[j], current_job->cmd_proc[j]);
+                suppresion_job(i);
+                i--;
+            }
+            else if (current_job -> status_proc[j] == JOB_STOPPED){
+                printf("[%i] %i Stopped        %s\n", current_job->id, current_job->pid_proc[j], current_job->cmd_proc[j]);
+            }
+            else if (current_job -> status_proc[j] == JOB_KILLED){
+                printf("[%i] %i Killed        %s\n", current_job->id, current_job->pid_proc[j], current_job->cmd_proc[j]);
+                suppresion_job(i);
+                i--;
+            } 
+            else{
+                printf("[%i] %i Detached        %s\n", current_job->id, current_job->pid_proc[j], current_job->cmd_proc[j]);
+                suppresion_job(i);
+                i--;
+            } 
+            print_child(current_job ->pid_proc[j] ,1);     
+        }  
     }
     return 0;
 }
