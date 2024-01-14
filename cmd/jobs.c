@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <signal.h>
+
 
 void add_proc_to_job(pid_t pid, pid_t pgid){
     for (int i = 0; i < NBR_MAX_JOBS; i++){ // pourquoi cmp_jobs ?
@@ -99,28 +101,30 @@ int set_status(job * j,bool bg){
         if(info_wait == 0){
             status_changed = false;
         }
-        else     
-        if (WIFEXITED(status)){ //done
+        else {
+        
             if (WIFSIGNALED(status)){ //killed
                 killed ++;
                 done ++;  
                 j->status_proc[i] = JOB_KILLED;
             }
-            else{
+            else if (WIFEXITED(status)){ //done
                 done ++;
                 j->status_proc[i] = JOB_DONE; 
             }
-            j->exitedstatus = WEXITSTATUS(status);
-        }
-        else if (WIFSTOPPED(status)){ //stopped
-            stopped ++;
-            j->status_proc[i] = JOB_STOPPED;
-        }else {
-            running ++;
-            j->status_proc[i] = JOB_RUNNING;
+                //j->exitedstatus = WEXITSTATUS(status);
+            
+            else if (WIFSTOPPED(status)){ //stopped
+                stopped ++;
+                j->status_proc[i] = JOB_STOPPED;
+            }else {
+                running ++;
+                j->status_proc[i] = JOB_RUNNING;
+            }
         }
     }
-    
+
+
     if(done == j->nb_proc && killed > 0){
         if (j->jobstatus != JOB_KILLED){
             status_changed = true;
