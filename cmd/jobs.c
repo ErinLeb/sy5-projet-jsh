@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 
 void add_proc_to_job(pid_t pid, pid_t pgid){
@@ -229,6 +232,115 @@ int jobs(){
             suppresion_job(i);
             i--;
         }           
+    }
+    return 0;
+}
+
+void print_child(int target_pid,int space) {
+    char children_path[1024] = {0};
+    snprintf(children_path, sizeof(children_path), "/proc/%d/task/%d/children", target_pid, target_pid);
+    int children_file = open(children_path, O_RDONLY);
+
+    if (children_file != -1) {
+        int MAX_SIZE_PID = 1024;
+        int MAX_CHILD_JOBS = 1024;
+        char buf[MAX_CHILD_JOBS*MAX_SIZE_PID];
+        int* pid_fils = NULL;
+        read(children_file,buf,MAX_CHILD_JOBS*MAX_SIZE_PID);
+        int nombre_fils = 0;
+
+        if (space == 0){
+            pid_fils = malloc(sizeof(int));
+            pid_fils[0] = target_pid;
+            nombre_fils++;
+        }
+        else {
+            char *pid = strtok(buf, " ");
+            while (pid != NULL) {
+                pid_fils = realloc(pid_fils, (nombre_fils + 1) * sizeof(int));
+                pid_fils[nombre_fils] = atoi(pid);
+                nombre_fils++;
+
+                pid = strtok(NULL, " ");
+            }
+        }
+
+        for (int i = 0 ; i < nombre_fils; i++) {
+            int child_pid = pid_fils[i];
+
+            char info_path[512] = {0};
+            snprintf(info_path, sizeof(info_path), "/proc/%d/status", child_pid);
+            
+            FILE * info = fopen(info_path, "r");
+
+            if (info == NULL) {
+                perror("open fail");
+            }
+
+            char prog_name[1024] = {0};
+            bool prog_name_find = false;
+            char prog_state[1024]= {0};
+            bool prog_state_find = false;
+
+            char line[1024] = {0};
+            while (fgets(line, sizeof(line), info) != NULL) {
+                if (strncmp(line,"State:	",7) == 0){
+                    strcpy(prog_state, line+7);
+                    strcat(prog_state,"\0");
+                    prog_state_find = true;
+                }
+                if (strncmp(line,"Name:	",6) == 0){
+                    strcpy(prog_name, line+6);
+                    strcat(prog_name,"\0");
+                    prog_name_find = true;
+                }
+                if (prog_name_find && prog_state_find){
+                    break;
+                }
+            }
+            fclose(info);
+
+            if (! prog_name_find || ! prog_state_find){
+                perror("error prog_name_find or prog_stat_find");
+            }
+
+            for (int i = 0; i < space; ++i) {
+                printf("  |");
+            }
+
+            if (strcmp(prog_state,"R") == 0 || strcmp(prog_state,"S") == 0 || strcmp(prog_state,"D") == 0){
+                printf("%i Running        %s", child_pid, prog_name);
+            }
+            else if (strcmp(prog_state,"T")){
+                printf("%i Stopped        %s", child_pid, prog_name);
+            }
+            else if (strcmp(prog_state,"Z") == 0){
+                printf("%i Detached        %s", child_pid, prog_name);
+            }else{
+                printf("%i Unknown        %s", child_pid, prog_name);
+            }
+
+            print_child(child_pid, space + 1);
+        }
+        close(children_file);
+        free(pid_fils); 
+    }
+    else {
+        perror("open children_file");
+    }
+}
+
+
+int jobs_t(){
+
+    job *current_job;
+
+    for (int i = 0; i < cmp_jobs; i++){
+        current_job = jobs_suivis[i];
+        for (int j = 0; j < current_job->nb_proc; j++){
+            printf("[%i]",current_job->id);
+            print_child(current_job ->pid_proc[j] ,0);     
+        }  
     }
     return 0;
 }

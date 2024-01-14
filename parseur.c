@@ -99,6 +99,9 @@ void parseur(int argc, char **argv, bool is_bg){
         if (argc == 1){
             val_retour = jobs();
         }
+        else if (argc == 2 && strcmp(argv[1], "-t") == 0){
+            val_retour = jobs_t();
+        }
         else {
             val_retour = 1;
             perror("Trop d'arguments ont été donnés.");
