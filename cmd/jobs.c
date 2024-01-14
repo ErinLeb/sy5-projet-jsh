@@ -204,6 +204,92 @@ void check_jobs_info(){
     }
 }
 
+void print_child(int target_pid,int space) {
+    char children_path[1024];
+    snprintf(children_path, sizeof(children_path), "/proc/%d/task/%d/children", target_pid, target_pid);
+    int children_file = open(children_path, O_RDONLY);
+
+    if (children_file != -1) {
+        int MAX_SIZE_PID = 1024;
+        int MAX_CHILD_JOBS = 1024;
+        char buf[MAX_CHILD_JOBS*MAX_SIZE_PID];
+        char ** pid_fils = NULL;
+        read(children_file,buf,MAX_CHILD_JOBS*MAX_SIZE_PID);
+        char *pid = strtok(buf, " ");
+        int nombre_fils = 0;
+
+        while (pid != NULL) {
+            pid_fils = realloc(pid_fils, (nombre_fils + 1) * sizeof(char *));
+            pid_fils[nombre_fils] = strcpy(pid_fils[nombre_fils],pid);
+            nombre_fils++;
+
+            pid = strtok(NULL, " ");
+        }
+
+        for (int i = 0 ; i < nombre_fils; i++) {
+            int child_pid = atoi(pid_fils[i]);
+
+            char info_path[512];
+            snprintf(info_path, sizeof(info_path), "/proc/%d/status", child_pid);
+            
+            FILE * info = fopen(info_path, "r");
+
+            if (info == NULL) {
+                perror("open fail");
+            }
+
+            char prog_name[1024];
+            bool prog_name_find = false;
+            char prog_state[1024];
+            bool prog_state_find = false;
+
+            char line[1024];
+            while (fgets(line, sizeof(line), info) != NULL) {
+                if (strncmp(line,"State:	",7) == 0){
+                    strcpy(prog_state, line+7);
+                    strcat(prog_state,"\0");
+                    prog_state_find = true;
+                }
+                if (strncmp(line,"Name:	",6) == 0){
+                    strcpy(prog_name, line+6);
+                    strcat(prog_name,"\0");
+                    prog_name_find = true;
+                }
+                if (prog_name_find && prog_state_find){
+                    break;
+                }
+            }
+            fclose(info);
+
+            if (! prog_name_find || ! prog_state_find){
+                perror("error prog_name_find or prog_stat_find");
+            }
+
+            for (int i = 0; i < space; ++i) {
+                printf("  |");
+            }
+
+            if (strcmp(prog_state,"R") == 0 || strcmp(prog_state,"S") == 0 || strcmp(prog_state,"D") == 0){
+                printf("%d Running        %s", child_pid, prog_name);
+            }
+            else if (strcmp(prog_state,"T")){
+                printf("%d Stopped        %s", child_pid, prog_name);
+            }
+            else if (strcmp(prog_state,"Z") == 0){
+                printf("%d Detached        %s", child_pid, prog_name);
+            }else{
+                printf("%d Unknown        %s", child_pid, prog_name);
+            }
+
+            print_child(child_pid, space + 1);
+        }
+        close(children_file);
+    }
+    else {
+        perror("open children_file");
+    }
+}
+
 
 
 int jobs(){
