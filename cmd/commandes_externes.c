@@ -68,7 +68,6 @@ int cmd_ext(int argc, char* argv[], bool bg){
         if (bg){
             current_job -> afficher_save = true;
             current_job -> jobstatus = JOB_RUNNING;
-        
         } 
         else {
             res = tcsetpgrp(default_fd[0],pid);

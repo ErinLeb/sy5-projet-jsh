@@ -36,7 +36,6 @@ bool isInt (char * str) {
 }
 
 
-
 void parseur(int argc, char **argv){ 
     bool cmd_find = false;
 
@@ -189,13 +188,13 @@ void parseur(int argc, char **argv){
     if (!cmd_find){
         bool bg;
         appel_exit = false;
-        if (strcmp(argv[argc-1], "&") == 0){
+        if (strcmp(argv[argc - 1], "&") == 0){
             argc--;
             argv[argc] = NULL;
             bg = true;
         }
         else {
-            argv = realloc (argv, (argc+1)*sizeof(char*));
+            argv = realloc (argv, (argc + 1)*sizeof(char *));
             if (argv == NULL){
                 val_retour = 1;
                 perror("Erreur d'allocation parseur");
@@ -203,7 +202,7 @@ void parseur(int argc, char **argv){
             argv[argc] = NULL;
             bg = false;
         }
-        val_retour = cmd_ext(argc,argv, bg);
+        val_retour = cmd_ext(argc, argv, bg);
     }
     free(argv);
 }
