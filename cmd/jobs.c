@@ -40,10 +40,12 @@ job *new_job(pid_t pgid, char *cmd){
     res->id = id + 1;
     res->exitedstatus = 0;
     res->pgid = pgid;
-    res->nb_proc = 0;
-    res->pid_proc = malloc(0);
-    res->status_proc = malloc(0);
-    res->cmd_proc = malloc(0); 
+    res->nb_proc = 1;
+    res->pid_proc = malloc(sizeof(pid_t));
+    res->pid_proc[0] = pgid;
+    res->status_proc = malloc(sizeof(enum JobStatus *));
+    res->status_proc[0] = JOB_RUNNING;
+    res->cmd_proc = malloc(sizeof(char **)); //TODO : à remplir
     res->cmd = malloc((strlen(cmd) + 1) * sizeof(char));
     strcpy(res->cmd, cmd);
     res->afficher_save = false;
@@ -70,7 +72,7 @@ int set_status(job * j,bool bg){
     int info_wait;
     int status;
     int pid;
-    bool status_changed = false;
+    bool status_changed = true;
     
     int running = 0;
     int done = 0;
@@ -93,7 +95,11 @@ int set_status(job * j,bool bg){
             perror("waitpid (set_status)");
             return -1;
         }
-        
+
+        if(info_wait == 0){
+            status_changed = false;
+        }
+        else     
         if (WIFEXITED(status)){ //done
             if (WIFSIGNALED(status)){ //killed
                 killed ++;
@@ -102,7 +108,7 @@ int set_status(job * j,bool bg){
             }
             else{
                 done ++;
-                j->status_proc[i] = JOB_DONE;
+                j->status_proc[i] = JOB_DONE; 
             }
             j->exitedstatus = WEXITSTATUS(status);
         }
@@ -115,7 +121,6 @@ int set_status(job * j,bool bg){
         }
     }
     
-    //printf("here\n");
     if(done == j->nb_proc && killed > 0){
         if (j->jobstatus != JOB_KILLED){
             status_changed = true;

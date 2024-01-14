@@ -42,10 +42,11 @@ int cmd_ext(int argc, char* argv[], bool bg){
             sigaction(i, &def, NULL);
         }
         execvp(argv[0], argv);
+        perror("exec failed");
         exit (1);
     }
 
-    int res = setpgid(pid, pid); //TODO change
+    int res = setpgid(pid, pid); //TODO à généraliser pour les pipes
     if (res == -1){
         perror("setpgid");
         return 1;
@@ -55,7 +56,7 @@ int cmd_ext(int argc, char* argv[], bool bg){
     job * current_job = new_job(pid, cmd);
     jobs_suivis[cmp_jobs] = current_job;
     cmp_jobs++;
-    add_proc_to_job(pid,pid);
+    //add_proc_to_job(pid,pid); //TODO : change pour les pipes
     free(cmd);
     int exitedstatus = current_job -> exitedstatus;
 
@@ -64,7 +65,7 @@ int cmd_ext(int argc, char* argv[], bool bg){
         current_job -> jobstatus = JOB_RUNNING;
     }
     else {
-        res = tcsetpgrp(default_fd[0],pid);
+        res = tcsetpgrp(default_fd[0], pid);
         if (res == -1){
             perror("tcsetpgrp cmd_ext");
             return 1;
@@ -91,5 +92,5 @@ int cmd_ext(int argc, char* argv[], bool bg){
             return 1;
         }
     }
-    return (exitedstatus);
+    return exitedstatus;
 }

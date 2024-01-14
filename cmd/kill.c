@@ -54,6 +54,9 @@ int kill_job(int job, int sig) {
             else if(errno == ESRCH) {
                 perror("Le processus ou le groupe de processus n'existe pas.");
                 return 1;
+            }else{
+                perror("echec kill");
+                return 1;
             }
         }
         return 0;
