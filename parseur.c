@@ -17,6 +17,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 
 bool isInt (char * str) {
@@ -36,7 +38,8 @@ bool isInt (char * str) {
 }
 
 
-void parseur(int argc, char **argv){ 
+
+void parseur(int argc, char **argv, bool is_bg){ 
     bool cmd_find = false;
 
     if (strcmp(argv[0], "cd") == 0) { 
@@ -186,38 +189,66 @@ void parseur(int argc, char **argv){
     }
 
     if (!cmd_find){
-        bool bg;
         appel_exit = false;
-        if (strcmp(argv[argc - 1], "&") == 0){
-            argc--;
-            argv[argc] = NULL;
-            bg = true;
+        argv = realloc (argv, (argc+1)*sizeof(char*));
+        if (argv == NULL){
+            val_retour = 1;
+            perror("Erreur d'allocation parseur");
+        }
+        argv[argc] = NULL;
+
+        pid_t pid = fork();
+
+        if (pid == -1){
+            perror ("Erreur lors du fork cmd_ext.");
+            val_retour = 1;
         }
         else {
-            argv = realloc (argv, (argc + 1)*sizeof(char *));
-            if (argv == NULL){
-                val_retour = 1;
-                perror("Erreur d'allocation parseur");
-            }
-            argv[argc] = NULL;
-            bg = false;
+            val_retour = cmd_ext(argc, argv, is_bg, pid);
         }
-        val_retour = cmd_ext(argc, argv, bg);
     }
     free(argv);
 }
 
 
-void parseur_redirections(char *cmd){
+void is_bg(char *cmd){
     if (!cmd){
         val_retour = exit_jsh();
         return;
     }
+    if(strcmp(cmd, "") == 0){
+        return;
+    }
 
+    bool bg;
+    int i = -1;
+    char c; 
+    int length = strlen(cmd);
+
+    do{
+        i++;
+        c = cmd[length - 1 - i]; 
+    }while(i < length - 1 && c == ' ');
+
+    if(c == '&'){
+        bg = true;
+        char new_cmd[length];
+        strcpy(new_cmd, cmd);
+        new_cmd[length - 1 - i] = ' ';
+        parseur_redirections(new_cmd, bg);
+    
+    }else{
+        bg = false;
+        parseur_redirections(cmd, bg);
+    }
+}
+
+    
+void parseur_redirections(char *cmd, bool bg){
     // variables parseur
     char *sep = " ";
     char *current = strtok(cmd, sep);
-    char** argv = NULL;
+    char** argv = malloc(sizeof(char *));
     int argc = 0;
 
     // variables redirections
@@ -227,6 +258,13 @@ void parseur_redirections(char *cmd){
     bool redirection = false; 
     bool creat = true; // indique si le flag O_CREAT est présent
     bool changed[3] = {false, false, false}; // descripteurs changés
+
+    //Variables substitution
+    bool substitution = false;
+    char *name_fifo;
+    int tmp_fifo = 0;
+    int fifo = 0;
+    int fd_fifo_ecriture;
 
     while(current != NULL){  
         // si strtok détecte un symbole >, >>, <, ...
@@ -282,6 +320,169 @@ void parseur_redirections(char *cmd){
             oldfic = 2;
         }
 
+        else if(strcmp(current, "|") == 0){ // pipe
+            redirection = false;
+            int fd[2];
+            res = pipe(fd);
+            if(res < 0){
+                perror("pipe");
+                val_retour = 1;
+                goto maj_default;
+                return;
+            }
+
+            pid_t pid  = fork();
+            if(pid < 0 ){
+                perror("fork pipe");
+                val_retour = 1;
+                goto maj_default;
+                return;
+            }
+
+            if(pid == 0){
+                res = close(fd[0]);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("close");
+                    goto maj_default;
+                    return;
+                }
+                res = dup2(fd[1], 1);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("dup2");
+                    goto maj_default;
+                    return;
+                }
+                res = close(fd[1]);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("close");
+                    goto maj_default;
+                    return;
+                }
+                changed[1] = true;
+                argv = realloc (argv, (argc+1)*sizeof(char*));
+                if (argv == NULL){
+                    val_retour = 1;
+                    perror("Erreur d'allocation parseur");
+                }
+                argv[argc] = NULL;
+                val_retour = cmd_ext(argc, argv, bg, pid);
+            }else{
+                res = close(fd[1]);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("close");
+                    goto maj_default;
+                    return;
+                }
+                res = dup2(fd[0], 0);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("dup2");
+                    goto maj_default;
+                    return;
+                }
+                res = close(fd[0]);
+                if(res < 0){
+                    val_retour = 1;
+                    perror("close");
+                    goto maj_default;
+                    return;
+                }
+                changed[0] = true;
+
+                //on remet argc et argv à 0
+                argc = 0;
+                free(argv);
+                argv = malloc(sizeof(char *));
+            }
+        }
+
+        else if(strcmp(current, "<(") == 0){
+            substitution = true;
+            redirection = false;
+            // On alloue le bon nombre de caractères au nom du tube.
+            int dizaine = 1;
+            tmp_fifo = fifo;
+            while(tmp_fifo / 10 > 0){
+                ++dizaine;
+                tmp_fifo /= 10;
+            }
+            name_fifo = malloc(sizeof(char) * (dizaine + 1));
+            sprintf(name_fifo, "%d", fifo);
+            mkfifo(name_fifo,0777);
+            fifo++;
+
+            // Réécriture de strcat
+            char *cmd2 = malloc(sizeof(char));
+            int index = 0;
+            int len_cmd2 = 0;
+            int len_current;
+            if(cmd2 == NULL){
+                perror("malloc cmd2");
+                val_retour = 1;
+                goto maj_default;
+                return;
+            }
+            current = strtok(NULL, sep);
+            while(strcmp(current, ")") != 0){
+                len_current = strlen(current);
+                len_cmd2 += len_current + 1;
+                cmd2 = realloc(cmd2, sizeof(char) * (len_cmd2 + 1));
+                if(cmd2 == NULL){
+                    perror("realloc cmd2");
+                    val_retour = 1;
+                    goto maj_default;
+                    return;
+                }
+                for(int i = 0; i < len_current; ++i){
+                    cmd2[i + index] = current[i];
+                }
+                cmd2[len_current + index] = ' ';
+                index = len_cmd2;
+                current = strtok(NULL, sep);
+            }
+            cmd2[len_cmd2 - 1] = '\0';
+
+            // Exécution des commandes
+            res = fork();
+
+            if(res == 0){ // cmd2
+                fd_fifo_ecriture = open(name_fifo, O_WRONLY);
+                if(fd_fifo_ecriture < 0){
+                    perror("ouverture WR (substitution)");
+                    exit(1);
+                } 
+                res = dup2(fd_fifo_ecriture, 1);
+                if(res < 0){
+                    perror("dup2 substitution");
+                    exit(1);
+                }
+                res = close(fd_fifo_ecriture);
+                if(res < 0){
+                    perror("fermeture WR (substitution)");
+                    exit(1);
+                }
+                parseur_redirections(cmd2, bg); // on suppose que la sortie standard est toujours le fifo
+                free(cmd2);
+                exit(val_retour);
+            }else{ // cmd1
+                free(cmd2);
+                // name_fifo contient le résultat de cmd2
+                argc ++;
+                argv = realloc(argv, argc * sizeof(char *));
+                if (argv == NULL){
+                    val_retour = 1;
+                    perror("realloc (parseur_redirections)");
+                    goto maj_default;
+                    return;
+                }
+                argv[argc - 1] = name_fifo;
+            }
+        }
+
         // sinon, il ajoute les éléments à la commande à passer au parseur
         else{
             redirection = false;
@@ -330,7 +531,7 @@ void parseur_redirections(char *cmd){
     }
 
     // On traite la commande
-    parseur(argc, argv);
+    parseur(argc, argv, bg);
 
     goto maj_default;
 
@@ -338,7 +539,20 @@ void parseur_redirections(char *cmd){
     maj_default:
     for(int i = 0; i < 3; i++){
         if(changed[i]){
-            dup2(default_fd[i], i);
+            res = close(i);
+            if(res < 0){
+                perror("close");
+                exit(1);
+            }
+            res = dup2(default_fd[i], i);
+            if(res < 0){
+                perror("close");
+                exit(1);
+            }
         }
+    }
+    if(substitution){
+        unlink(name_fifo);
+        free(name_fifo);
     }
 }

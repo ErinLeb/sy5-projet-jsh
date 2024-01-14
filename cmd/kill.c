@@ -35,8 +35,8 @@ int kill_job(int job, int sig) {
     if(id_taken[job - 1]){
         pid_t job_pid = 0;
         for(int i = 0; i < cmp_jobs; ++i) {
-            if(pid_jobs[i]->id == job){
-                job_pid = pid_jobs[i]->pid;
+            if(jobs_suivis[i]->id == job){
+                job_pid = jobs_suivis[i]->pgid;
                 break;
             }
         }
@@ -53,6 +53,9 @@ int kill_job(int job, int sig) {
             }
             else if(errno == ESRCH) {
                 perror("Le processus ou le groupe de processus n'existe pas.");
+                return 1;
+            }else{
+                perror("echec kill");
                 return 1;
             }
         }

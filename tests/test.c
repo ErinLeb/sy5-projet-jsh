@@ -20,7 +20,7 @@ int default_fd [3] = {STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO};
 char * path_courant;
 char * path_precedent;
 int cmp_jobs = 0; 
-job * pid_jobs[NBR_MAX_JOBS];
+job * jobs_suivis[NBR_MAX_JOBS];
 bool id_taken[NBR_MAX_JOBS];
 int val_retour = 0;  
 bool boucle = true;
@@ -89,23 +89,6 @@ void test_prompt() {
     free(r);
     free(p);
     free(path_courant);
-}
-
-void test_cmd_ext() {
-    printf("-------------------------TEST CMD_EXT----------------------------\n");
-    chdir(".");
-    char *cmd1[] = {"ls", NULL};
-    val_retour = cmd_ext(1,cmd1,false);
-    printf("valeur attendue : 0, valeur obtenue : %d\n", val_retour);
-    char *cmd2[] = {"echo", "test", NULL};
-    val_retour = cmd_ext(2,cmd2,false);
-    printf("valeur attendue : 0, valeur obtenue: %d\n", val_retour);
-    char *cmd3[] = {"ls", "-lia", NULL};
-    val_retour = cmd_ext(2,cmd3,false);
-    printf("valeur attendue : 0, valeur obtenue : %d\n", val_retour);
-    char *cmd4[] = {"ls", "fichierInexistantASupprimerSinon", "fichierInexistantASupprimerSinon", NULL};
-    val_retour = cmd_ext(3,cmd4,false);
-    printf("valeur attendue : 2, valeur obtenue : %d\n", val_retour);
 }
 
 void test_kill() {

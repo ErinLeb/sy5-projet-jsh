@@ -13,7 +13,7 @@ int default_fd [3];
 char * path_courant;
 char * path_precedent;
 int cmp_jobs;
-job * pid_jobs[NBR_MAX_JOBS];
+job * jobs_suivis[NBR_MAX_JOBS];
 bool id_taken[NBR_MAX_JOBS];
 int val_retour;
 bool boucle;
@@ -75,7 +75,7 @@ int main(int argc, char const *argv[]) {
          
         ligne_cmd = readline(prompt_char);
         add_history(ligne_cmd);
-        parseur_redirections(ligne_cmd);
+        is_bg(ligne_cmd);
         free(ligne_cmd);
         check_jobs_info ();
     }
@@ -84,6 +84,6 @@ int main(int argc, char const *argv[]) {
     free(prompt_char);
     free(path_courant);
     free(path_precedent);
-    
+
     return val_retour;
 }
