@@ -14,11 +14,16 @@ enum JobStatus {
 
 struct job {
     int id;
-    pid_t pid;
+    pid_t pgid;
+    pid_t *pid_proc;
+    enum JobStatus * status_proc;
+    char** cmd_proc;
+    int nb_proc;
     char * cmd;
     //permet de savoir si la mise à jour de l'état du processus a déjà été faite avant que l'affichage soit fait (cela arrive quand le job est initialisé)
     bool afficher_save;
     enum JobStatus jobstatus;
+    int exitedstatus;
 };
 
 typedef struct job job;
@@ -29,10 +34,12 @@ extern void check_jobs_info ();
 /* Affiche les informations sur tous les jobs en cours */
 extern int jobs ();
 
-extern job *new_job(pid_t pid, char *cmd);
+extern void add_proc_to_job(pid_t, pid_t);
 
-extern void suppresion_job(int i);
+extern job *new_job(pid_t, char *);
 
-extern void set_status(job *, int);
+extern void suppresion_job(int );
+
+extern int set_status(job *, bool);
 
 #endif

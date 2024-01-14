@@ -27,14 +27,7 @@ char * concat (int argc, char *argv[]) {
 }
 
 
-int cmd_ext(int argc, char* argv[], bool bg){
-    int res;
-    pid_t pid = fork();
-
-    if (pid == -1){
-        perror ("Erreur lors du fork cmd_ext.");
-        return 1;
-    }
+int cmd_ext(int argc, char* argv[], bool bg, pid_t pid){
 
     if (pid == 0){
         struct sigaction def = {0};
@@ -43,60 +36,54 @@ int cmd_ext(int argc, char* argv[], bool bg){
             sigaction(i, &def, NULL);
         }
         execvp(argv[0], argv);
+        perror("exec failed");
         exit (1);
     }
 
-    else {
-        int res = setpgid(pid, pid);
-        if (res == -1){
-            perror("setpgid");
-            return 1;
-        }
-        int status;
-        int info_fils;
-        char * cmd = concat(argc, argv);
-        job * current_job = new_job(pid, cmd);
-        res = setpgid(pid, pid);
-        if(res != 0){
-            perror("Erreur setpgid");
-            return 1;
-        }
-        pid_jobs[cmp_jobs] = current_job;
-        free(cmd);
-        cmp_jobs++;
-
-        if (bg){
-            current_job -> afficher_save = true;
-            current_job -> jobstatus = JOB_RUNNING;
-        } 
-        else {
-            res = tcsetpgrp(default_fd[0],pid);
-            if (res == -1){
-                perror("tcsetpgrp cmd_ext");
-                return 1;
-            }
-
-            info_fils = waitpid(pid, &status, WUNTRACED);
-
-            if (info_fils == -1){
-                perror("waitpid (cmd_ext)");
-                return WEXITSTATUS(status);
-            }
-            
-            if (WIFEXITED(status)){
-                suppresion_job(cmp_jobs - 1);
-            } 
-            else {
-                current_job -> afficher_save = true;
-                set_status(current_job, status);
-            }
-
-            res = tcsetpgrp(default_fd[0],getpid());
-            if (res == -1){
-                perror("tcsetpgrp jsh ");
-                return 1;
-            }
-        }
-        return WEXITSTATUS(status);
+    int res = setpgid(pid, pid);
+    if (res == -1){
+        perror("setpgid");
+        return 1;
     }
+    
+    char * cmd = concat(argc, argv);
+    job * current_job = new_job(pid, cmd);
+    jobs_suivis[cmp_jobs] = current_job;
+    cmp_jobs++;
+    free(cmd);
+    int exitedstatus = current_job -> exitedstatus;
+
+    if (bg){
+        current_job -> afficher_save = true;
+        current_job -> jobstatus = JOB_RUNNING;
+    }
+    else {
+        res = tcsetpgrp(default_fd[0], pid);
+        if (res == -1){
+            perror("tcsetpgrp cmd_ext");
+            return 1;
+        }   
+        
+        current_job -> jobstatus = JOB_RUNNING;
+        
+        if(set_status(current_job, bg) < 0){
+            perror("wait cmd_ext");
+            return 1;
+        }
+
+        exitedstatus = current_job -> exitedstatus;
+        
+        if(current_job->jobstatus != JOB_RUNNING && current_job->jobstatus != JOB_STOPPED){
+            suppresion_job(cmp_jobs - 1);
+        }else{
+            current_job->afficher_save = true;
+        }
+
+        res = tcsetpgrp(default_fd[0], getpgid(getpid()));
+        if (res == -1){
+            perror("tcsetpgrp jsh");
+            return 1;
+        }
+    }
+    return exitedstatus;
 }
