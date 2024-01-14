@@ -71,7 +71,7 @@ int cmd_ext(int argc, char* argv[], bool bg){
                 return 1;
             }
             
-            if(set_status(current_job) < 0){
+            if(set_status(current_job, bg) < 0){
                 perror("wait cmd_ext");
                 return 1;
             }

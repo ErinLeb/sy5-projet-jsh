@@ -37,6 +37,6 @@ extern job *new_job(pid_t pid, pid_t pgid, char *cmd);
 
 extern void suppresion_job(int i);
 
-extern int set_status(job *);
+extern int set_status(job *, bool);
 
 #endif
