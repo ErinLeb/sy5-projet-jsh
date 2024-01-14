@@ -17,10 +17,10 @@ int exit_jsh_with_arg(int val){
         return 1;
     }
     for(int i = 0; i < cmp_jobs; ++i){
-        if(pid_jobs[i]->jobstatus == 2){
-            kill_job(pid_jobs[i]->id, SIGCONT);
+        if(jobs_suivis[i]->jobstatus == 2){
+            kill_job(jobs_suivis[i]->id, SIGCONT);
         }
-        kill_job(pid_jobs[i]->id, SIGHUP);
+        kill_job(jobs_suivis[i]->id, SIGHUP);
     }
     boucle = false;
     return val;

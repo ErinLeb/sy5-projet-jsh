@@ -14,8 +14,8 @@ int bg(int job_id){
     
     job *resume = NULL;
     for(int i = 0; i < cmp_jobs; ++i){
-        if(pid_jobs[i] -> id == job_id){
-            resume = pid_jobs[i];
+        if(jobs_suivis[i] -> id == job_id){
+            resume = jobs_suivis[i];
             break;
         }
     }

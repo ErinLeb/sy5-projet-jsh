@@ -46,44 +46,39 @@ int cmd_ext(int argc, char* argv[], bool bg){
     }
 
     else {
-        int res = setpgid(pid, pid);
+        int res = setpgid(pid, pid); //TODO change
         if (res == -1){
             perror("setpgid");
             return 1;
         }
+        
         int status;
         int info_fils;
         char * cmd = concat(argc, argv);
-        job * current_job = new_job(pid, cmd);
-        pid_jobs[cmp_jobs] = current_job;
+        job * current_job = new_job(pid, getpgid(pid), cmd);
+        jobs_suivis[cmp_jobs] = current_job;
         free(cmd);
         cmp_jobs++;
 
         if (bg){
             current_job -> afficher_save = true;
             current_job -> jobstatus = JOB_RUNNING;
-        
-        } 
+        }
         else {
             res = tcsetpgrp(default_fd[0],pid);
             if (res == -1){
                 perror("tcsetpgrp cmd_ext");
                 return 1;
             }
-
-            info_fils = waitpid(pid, &status, WUNTRACED);
-
-            if (info_fils == -1){
-                perror("waitpid (cmd_ext)");
-                return WEXITSTATUS(status);
-            }
             
-            if (WIFEXITED(status)){
+            if(set_status(current_job) < 0){
+                perror("wait cmd_ext");
+                return 1;
+            }
+            if(current_job->jobstatus == JOB_DONE){
                 suppresion_job(cmp_jobs - 1);
-            } 
-            else {
-                current_job -> afficher_save = true;
-                set_status(current_job, status);
+            }else{
+                current_job->afficher_save = true;
             }
 
             res = tcsetpgrp(default_fd[0], getpgid(getpid()));
