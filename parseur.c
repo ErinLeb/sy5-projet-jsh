@@ -410,6 +410,10 @@ void parseur_redirections(char *cmd, bool bg){
             int len_current;
             if(cmd2 == NULL){
                 perror("malloc cmd2");
+                val_retour = 1;
+                goto maj_default;
+                return;
+            }
             current = strtok(NULL, sep);
             while(strcmp(current, ")") != 0){
                 len_current = strlen(current);
@@ -449,7 +453,7 @@ void parseur_redirections(char *cmd, bool bg){
                     perror("fermeture WR (substitution)");
                     exit(-1);
                 }
-                parseur_redirections(cmd2); // on suppose que la sortie standard est toujours le fifo
+                parseur_redirections(cmd2, bg); // on suppose que la sortie standard est toujours le fifo
                 free(cmd2);
                 exit(val_retour);
             }else{ // cmd1
