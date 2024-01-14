@@ -16,6 +16,7 @@ char * concat (int argc, char *argv[]) {
     for (int i = 0; i < argc; i++) {
         taille += strlen(argv[i]);
     }
+
     char* res = malloc ((taille + argc) * sizeof(char));
     res[0] = '\0';
     for (int i = 0; i < argc-1; i++) {
