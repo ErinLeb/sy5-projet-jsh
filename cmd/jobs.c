@@ -208,7 +208,7 @@ void check_jobs_info(){
 }
 
 void print_child(int target_pid,int space) {
-    char children_path[1024];
+    char children_path[1024] = {0};
     snprintf(children_path, sizeof(children_path), "/proc/%d/task/%d/children", target_pid, target_pid);
     int children_file = open(children_path, O_RDONLY);
 
@@ -239,7 +239,7 @@ void print_child(int target_pid,int space) {
         for (int i = 0 ; i < nombre_fils; i++) {
             int child_pid = pid_fils[i];
 
-            char info_path[512];
+            char info_path[512] = {0};
             snprintf(info_path, sizeof(info_path), "/proc/%d/status", child_pid);
             
             FILE * info = fopen(info_path, "r");
@@ -248,12 +248,12 @@ void print_child(int target_pid,int space) {
                 perror("open fail");
             }
 
-            char prog_name[1024];
+            char prog_name[1024] = {0};
             bool prog_name_find = false;
-            char prog_state[1024];
+            char prog_state[1024]= {0};
             bool prog_state_find = false;
 
-            char line[1024];
+            char line[1024] = {0};
             while (fgets(line, sizeof(line), info) != NULL) {
                 if (strncmp(line,"State:	",7) == 0){
                     strcpy(prog_state, line+7);
@@ -280,20 +280,21 @@ void print_child(int target_pid,int space) {
             }
 
             if (strcmp(prog_state,"R") == 0 || strcmp(prog_state,"S") == 0 || strcmp(prog_state,"D") == 0){
-                printf("%d Running        %s", child_pid, prog_name);
+                printf("%i Running        %s", child_pid, prog_name);
             }
             else if (strcmp(prog_state,"T")){
-                printf("%d Stopped        %s", child_pid, prog_name);
+                printf("%i Stopped        %s", child_pid, prog_name);
             }
             else if (strcmp(prog_state,"Z") == 0){
-                printf("%d Detached        %s", child_pid, prog_name);
+                printf("%i Detached        %s", child_pid, prog_name);
             }else{
-                printf("%d Unknown        %s", child_pid, prog_name);
+                printf("%i Unknown        %s", child_pid, prog_name);
             }
 
             print_child(child_pid, space + 1);
         }
         close(children_file);
+        free(pid_fils); 
     }
     else {
         perror("open children_file");
