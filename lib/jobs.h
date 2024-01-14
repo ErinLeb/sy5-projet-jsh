@@ -16,6 +16,8 @@ struct job {
     int id;
     pid_t pgid;
     pid_t *pid_proc;
+    enum JobStatus * status_proc;
+    char** cmd_proc;
     int nb_proc;
     char * cmd;
     //permet de savoir si la mise à jour de l'état du processus a déjà été faite avant que l'affichage soit fait (cela arrive quand le job est initialisé)

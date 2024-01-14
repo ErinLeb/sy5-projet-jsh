@@ -8,12 +8,14 @@
 #include <stdio.h>
 
 void add_proc_to_job(pid_t pid, pid_t pgid){
-    for (int i = 0; i < cmp_jobs; i++){
+    for (int i = 0; i < NBR_MAX_JOBS; i++){ // pourquoi cmp_jobs ?
         job *j = jobs_suivis[i];
         if(j->pgid == pgid){
             j->nb_proc ++;
             j->pid_proc = realloc(j->pid_proc, j->nb_proc*sizeof(pid_t)); 
             j->pid_proc[j->nb_proc-1] = pid;
+            j->status_proc = realloc(j->status_proc, j->nb_proc*sizeof(enum JobStatus));
+            j->status_proc[j->nb_proc-1] = JOB_RUNNING;
             return;
         }
     }
@@ -22,7 +24,7 @@ void add_proc_to_job(pid_t pid, pid_t pgid){
 }
 
 
-job *new_job(pid_t pid, char *cmd){
+job *new_job(pid_t pgid, char *cmd){
     job *res = malloc(sizeof(job));
     if (res == NULL){
         perror("malloc (new_job)");
@@ -37,10 +39,11 @@ job *new_job(pid_t pid, char *cmd){
     }
     res->id = id + 1;
     res->exitedstatus = 0;
-    res->pgid = pid;
-    res->nb_proc = 1;
-    res->pid_proc = malloc(sizeof(pid_t));
-    res->pid_proc[0] = pid;
+    res->pgid = pgid;
+    res->nb_proc = 0;
+    res->pid_proc = malloc(0);
+    res->status_proc = malloc(0);
+    res->cmd_proc = malloc(0); 
     res->cmd = malloc((strlen(cmd) + 1) * sizeof(char));
     strcpy(res->cmd, cmd);
     res->afficher_save = false;
@@ -53,6 +56,8 @@ void suppresion_job(int i){
     id_taken[(current_job->id) - 1] = false;
     free(current_job->cmd);
     free(current_job->pid_proc);
+    free(current_job->status_proc);
+    free(current_job->cmd_proc);
     free(current_job);
     for (int j = i; j < cmp_jobs - 1; j++){
         jobs_suivis[j] = jobs_suivis[j + 1];
@@ -73,7 +78,10 @@ int set_status(job * j,bool bg){
     int killed = 0;
 
     for(int i = 0; i < j->nb_proc; i++){
-        //puts("hello");
+        if (j->status_proc[i] == JOB_DONE || j->status_proc[i] == JOB_KILLED){
+            continue;
+        }
+        
         pid = j->pid_proc[i];
         if (bg){
             info_wait = waitpid(pid, &status, WCONTINUED | WNOHANG | WUNTRACED);
@@ -86,34 +94,39 @@ int set_status(job * j,bool bg){
             return -1;
         }
         
-        if (WIFCONTINUED(status)){ //running
-            running ++;
-        }
-        else if (WIFEXITED(status)){ //done
+        if (WIFEXITED(status)){ //done
+            if (WIFSIGNALED(status)){ //killed
+                killed ++;
+                done ++;  
+                j->status_proc[i] = JOB_KILLED;
+            }
+            else{
+                done ++;
+                j->status_proc[i] = JOB_DONE;
+            }
             j->exitedstatus = WEXITSTATUS(status);
-            done ++;
         }
         else if (WIFSTOPPED(status)){ //stopped
             stopped ++;
-        }
-        else if (WIFSIGNALED(status)){ //killed
-            //printf("signal : %i pid : %i\n",WTERMSIG(status),pid);
-            killed ++;
+            j->status_proc[i] = JOB_STOPPED;
+        }else {
+            running ++;
+            j->status_proc[i] = JOB_RUNNING;
         }
     }
     
     //printf("here\n");
-    if(done == j->nb_proc){
-        if (j->jobstatus != JOB_DONE){
-            status_changed = true;
-            j->jobstatus = JOB_DONE;
-        }
-    }else if(running == 0 && stopped == 0 && done + killed == j->nb_proc && killed > 0){
+    if(done == j->nb_proc && killed > 0){
         if (j->jobstatus != JOB_KILLED){
             status_changed = true;
             j->jobstatus = JOB_KILLED;
         }
-    }
+    }else if(done == j->nb_proc){
+        if (j->jobstatus != JOB_DONE){
+            status_changed = true;
+            j->jobstatus = JOB_DONE;
+        }
+    } 
     // else if(done == j->nb_proc){
     //     j->jobstatus = JOB_DETACHED;
     // }

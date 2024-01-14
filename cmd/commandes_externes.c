@@ -54,9 +54,9 @@ int cmd_ext(int argc, char* argv[], bool bg){
     char * cmd = concat(argc, argv);
     job * current_job = new_job(pid, cmd);
     jobs_suivis[cmp_jobs] = current_job;
-    free(cmd);
     cmp_jobs++;
-
+    add_proc_to_job(pid,pid);
+    free(cmd);
     int exitedstatus = current_job -> exitedstatus;
 
     if (bg){
@@ -78,7 +78,7 @@ int cmd_ext(int argc, char* argv[], bool bg){
         }
 
         exitedstatus = current_job -> exitedstatus;
-
+        
         if(current_job->jobstatus != JOB_RUNNING && current_job->jobstatus != JOB_STOPPED){
             suppresion_job(cmp_jobs - 1);
         }else{
