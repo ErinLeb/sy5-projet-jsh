@@ -13,7 +13,7 @@ int default_fd [3];
 char * path_courant;
 char * path_precedent;
 int cmp_jobs;
-job * pid_jobs[NBR_MAX_JOBS];
+job * jobs_suivis[NBR_MAX_JOBS];
 bool id_taken[NBR_MAX_JOBS];
 int val_retour;
 bool boucle;

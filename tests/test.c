@@ -20,7 +20,7 @@ int default_fd [3] = {STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO};
 char * path_courant;
 char * path_precedent;
 int cmp_jobs = 0; 
-job * pid_jobs[NBR_MAX_JOBS];
+job * jobs_suivis[NBR_MAX_JOBS];
 bool id_taken[NBR_MAX_JOBS];
 int val_retour = 0;  
 bool boucle = true;

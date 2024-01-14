@@ -224,7 +224,7 @@ void is_bg(char *cmd){
     int length = strlen(cmd);
 
     if(length == 0){ 
-        parseur_redirections(cmd, false);
+        val_retour = 0;
         return;
     }
 
@@ -389,6 +389,7 @@ void parseur_redirections(char *cmd, bool bg){
                     return;
                 }
                 changed[0] = true;
+
                 //on remet argc et argv à 0
                 argc = 0;
                 free(argv);
@@ -444,7 +445,10 @@ void parseur_redirections(char *cmd, bool bg){
     }
 
     // On traite la commande
-    parseur(argc, argv, bg);
+    /*if(!pipe_redir){
+        pgid = 
+    }*/
+    parseur(argc, argv, bg/*,pgid*/);
 
     goto maj_default;
 
