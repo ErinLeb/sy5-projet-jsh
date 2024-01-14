@@ -77,7 +77,7 @@ int main(int argc, char const *argv[]) {
         add_history(ligne_cmd);
         is_bg(ligne_cmd);
         free(ligne_cmd);
-        check_jobs_info ();
+        check_jobs_info();
     }
 
 

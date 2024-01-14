@@ -17,6 +17,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <errno.h>
 
 
 bool isInt (char * str) {
@@ -252,6 +256,13 @@ void parseur_redirections(char *cmd, bool bg){
     bool redirection = false; 
     bool creat = true; // indique si le flag O_CREAT est présent
     bool changed[3] = {false, false, false}; // descripteurs changés
+    
+    //Variables substitution
+    bool substitution = false;
+    char *name_fifo;
+    int tmp_fifo = 0;
+    int fd_fifo_ecriture;
+
 
     while(current != NULL){  
         // si strtok détecte un symbole >, >>, <, ...
@@ -379,6 +390,84 @@ void parseur_redirections(char *cmd, bool bg){
             }
         }
 
+            // cmd1 <( cmd2 )
+        else if(strcmp(current, "<(") == 0){
+            substitution = true;
+            // On alloue le bon nombre de caractères au nom du tube.
+            int dizaine = 1;
+            while(tmp_fifo / 10 > 0){
+                ++dizaine;
+            }
+            name_fifo = malloc(sizeof(char) * (dizaine + 1));
+            sprintf(name_fifo, "%d", tmp_fifo);
+            mkfifo(name_fifo,0777);
+            tmp_fifo++;
+
+            // Réécriture de strcat
+            char *cmd2 = malloc(sizeof(char));
+            int index = 0;
+            int len_cmd2 = 0;
+            int len_current;
+            if(cmd2 == NULL){
+                perror("malloc cmd2");
+            current = strtok(NULL, sep);
+            while(strcmp(current, ")") != 0){
+                len_current = strlen(current);
+                len_cmd2 += len_current + 1;
+                cmd2 = realloc(cmd2, sizeof(char) * len_cmd2);
+                if(cmd2 == NULL){
+                    perror("realloc cmd2");
+                    val_retour = 1;
+                    goto maj_default;
+                    return;
+                }
+                for(int i = 0; i < len_current; ++i){
+                    cmd2[i + index] = current[i];
+                }
+                cmd2[len_current + index] = ' ';
+                index = len_cmd2;
+                current = strtok(NULL, sep);
+            }
+            cmd2[len_cmd2 - 1] = '\0';
+
+            // Exécution des commandes
+            res = fork();
+
+            if(res == 0){ // cmd2
+                fd_fifo_ecriture = open(name_fifo, O_WRONLY);
+                if(fd_fifo_ecriture < 0){
+                    perror("ouverture WR (substitution)");
+                    exit(-1);
+                } 
+                res = dup2(fd_fifo_ecriture, 1);
+                if(res < 0){
+                    perror("dup2 substitution");
+                    exit(-1);
+                }
+                res = close(fd_fifo_ecriture);
+                if(res < 0){
+                    perror("fermeture WR (substitution)");
+                    exit(-1);
+                }
+                parseur_redirections(cmd2); // on suppose que la sortie standard est toujours le fifo
+                free(cmd2);
+                exit(val_retour);
+            }else{ // cmd1
+                free(cmd2);
+                // name_fifo contient le résultat de cmd2
+                argc ++;
+                argv = realloc(argv, argc * sizeof(char *));
+                if (argv == NULL){
+                    val_retour = 1;
+                    perror("realloc (parseur_redirections)");
+                    goto maj_default;
+                    return;
+                }
+                argv[argc - 1] = name_fifo;
+            }
+        }
+            
+
         // sinon, il ajoute les éléments à la commande à passer au parseur
         else{
             redirection = false;
@@ -387,6 +476,7 @@ void parseur_redirections(char *cmd, bool bg){
             if (argv == NULL){
                 val_retour = 1;
                 perror("realloc");
+                goto maj_default;
                 return;
             }
             argv[argc - 1] = current;
@@ -402,7 +492,7 @@ void parseur_redirections(char *cmd, bool bg){
             }
             if(newfic == -1){
                 val_retour = 1;
-                perror("open");
+                perror("open here");
                 goto maj_default; 
                 return;
             }
@@ -410,7 +500,7 @@ void parseur_redirections(char *cmd, bool bg){
             res = dup2(newfic, oldfic);
             if(res < 0){
                 val_retour = 1;
-                perror("dup2");
+                perror("dup2 redirection");
                 goto maj_default;
                 return;
             }
@@ -446,5 +536,9 @@ void parseur_redirections(char *cmd, bool bg){
                 exit(1);
             }
         }
+    }
+    if(substitution){
+        unlink(name_fifo);
+        free(name_fifo);
     }
 }
