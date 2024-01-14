@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include "lib/commandes_externes.h"
 
 
 bool isInt (char * str) {
@@ -37,7 +38,7 @@ bool isInt (char * str) {
 
 
 
-void parseur(int argc, char **argv, bool is_bg){ 
+void parseur(int argc, char **argv, bool is_bg, pid_t pgid){ 
     bool cmd_find = false;
 
     if (strcmp(argv[0], "cd") == 0) { 
@@ -195,15 +196,72 @@ void parseur(int argc, char **argv, bool is_bg){
         }
         argv[argc] = NULL;
 
+        job * current_job = NULL;
+
         pid_t pid = fork();
 
         if (pid == -1){
             perror ("Erreur lors du fork cmd_ext.");
             val_retour = 1;
+            return;
+        }
+
+        if(pid && pgid == -1){
+            pgid = pid;
+            char * cmd = concat(argc, argv);
+            current_job = new_job(pid, cmd, cmd);
+            jobs_suivis[cmp_jobs] = current_job;
+            cmp_jobs++;
+            free(cmd);
+        }else if(pid){ // dernière commande de la pipe
+            char * cmd = concat(argc, argv);
+            add_proc_to_job(pid, pgid, cmd);
+            free(cmd);
+        }
+        
+        if(cmd_ext(argc, argv, is_bg, pid, pgid, current_job) == 1){
+            val_retour = 1;
+        }
+
+        int res;
+        int exitedstatus = current_job -> exitedstatus;
+
+        if (is_bg){
+            current_job -> afficher_save = true;
+            current_job -> jobstatus = JOB_RUNNING;
         }
         else {
-            val_retour = cmd_ext(argc, argv, is_bg, pid);
+            res = tcsetpgrp(default_fd[0], pid);
+            if (res == -1){
+                perror("tcsetpgrp cmd_ext");
+                val_retour = 1;
+                return;
+            }   
+
+            current_job -> jobstatus = JOB_RUNNING;
+
+            if(set_status(current_job, is_bg) < 0){
+                perror("wait cmd_ext");
+                val_retour = 1;
+                return;
+            }
+
+            exitedstatus = current_job -> exitedstatus;
+
+            if(current_job->jobstatus != JOB_RUNNING && current_job->jobstatus != JOB_STOPPED){
+                suppresion_job(cmp_jobs - 1);
+            }else{
+                current_job->afficher_save = true;
+            }
+
+            res = tcsetpgrp(default_fd[0], getpgid(getpid()));//TODO change ?
+            if (res == -1){
+                perror("tcsetpgrp jsh");
+                val_retour = 1;
+                return;
+            }
         }
+        val_retour = exitedstatus;
     }
     free(argv);
 }
@@ -250,6 +308,8 @@ void is_bg(char *cmd){
 void parseur_redirections(char *cmd, bool bg){
     // variables parseur
     char *sep = " ";
+    char *nom_entier = malloc(sizeof(char *)); //TODO free
+    strcpy(nom_entier, cmd);
     char *current = strtok(cmd, sep);
     char** argv = malloc(sizeof(char *));
     int argc = 0;
@@ -261,6 +321,9 @@ void parseur_redirections(char *cmd, bool bg){
     bool redirection = false; 
     bool creat = true; // indique si le flag O_CREAT est présent
     bool changed[3] = {false, false, false}; // descripteurs changés
+
+    // variables pipe
+    pid_t pgid = -1;
 
     while(current != NULL){  
         // si strtok détecte un symbole >, >>, <, ...
@@ -364,9 +427,8 @@ void parseur_redirections(char *cmd, bool bg){
                     perror("Erreur d'allocation parseur");
                 }
                 argv[argc] = NULL;
-                val_retour = cmd_ext(argc, argv, bg, pid);
+                val_retour = cmd_ext(argc, argv, bg, pid, pgid, NULL);
             }else{
-                //cmd_ext(argc, argv, bg, pid);
                 res = close(fd[1]);
                 if(res < 0){
                     val_retour = 1;
@@ -389,6 +451,23 @@ void parseur_redirections(char *cmd, bool bg){
                     return;
                 }
                 changed[0] = true;
+
+
+                if(pgid == -1){ //première commande
+                    pgid = res; //le groupe du job prend le pid de la première commande
+                    printf("nom de la pipe : %s\n", nom_entier);
+                    char * cmd1 = concat(argc, argv);
+                    job * job_pipe = new_job(pgid, nom_entier, cmd1);
+                    jobs_suivis[cmp_jobs] = job_pipe;
+                    cmp_jobs++;
+                    free(cmd1);
+                    cmd_ext(argc, argv, bg, pid, pgid, job_pipe);
+                }else{
+                    char * cmdi = concat(argc, argv);
+                    add_proc_to_job(res, pgid, cmdi);
+                    free(cmdi);
+                }
+
 
                 //on remet argc et argv à 0
                 argc = 0;
@@ -444,11 +523,8 @@ void parseur_redirections(char *cmd, bool bg){
         return;
     }
 
-    // On traite la commande
-    /*if(!pipe_redir){
-        pgid = 
-    }*/
-    parseur(argc, argv, bg/*,pgid*/);
+
+    parseur(argc, argv, bg, pgid);
 
     goto maj_default;
 

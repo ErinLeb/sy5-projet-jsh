@@ -34,9 +34,9 @@ extern void check_jobs_info ();
 /* Affiche les informations sur tous les jobs en cours */
 extern int jobs ();
 
-extern void add_proc_to_job(pid_t, pid_t);
+extern void add_proc_to_job(pid_t pid, pid_t pgid, char *cmd);
 
-extern job *new_job(pid_t, char *);
+extern job *new_job(pid_t, char *, char *);
 
 extern void suppresion_job(int );
 

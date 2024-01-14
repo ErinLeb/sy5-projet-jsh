@@ -9,24 +9,26 @@
 #include <signal.h>
 
 
-void add_proc_to_job(pid_t pid, pid_t pgid){
-    for (int i = 0; i < NBR_MAX_JOBS; i++){ // pourquoi cmp_jobs ?
-        job *j = jobs_suivis[i];
+void add_proc_to_job(pid_t pid, pid_t pgid, char *cmd){
+    job *j;
+    for (int i = 0; i < cmp_jobs; i++){ 
+        j = jobs_suivis[i];
         if(j->pgid == pgid){
             j->nb_proc ++;
             j->pid_proc = realloc(j->pid_proc, j->nb_proc*sizeof(pid_t)); 
             j->pid_proc[j->nb_proc-1] = pid;
             j->status_proc = realloc(j->status_proc, j->nb_proc*sizeof(enum JobStatus));
             j->status_proc[j->nb_proc-1] = JOB_RUNNING;
+            j->cmd_proc = realloc(j->cmd_proc, j->nb_proc*sizeof(char *));
+            j->cmd_proc[j->nb_proc - 1] = cmd;
             return;
         }
     }
-    //TODO : erreur
     perror("groupe de job inexistant");
 }
 
 
-job *new_job(pid_t pgid, char *cmd){
+job *new_job(pid_t pgid, char *cmd, char *cmd1){
     job *res = malloc(sizeof(job));
     if (res == NULL){
         perror("malloc (new_job)");
@@ -47,9 +49,10 @@ job *new_job(pid_t pgid, char *cmd){
     res->pid_proc[0] = pgid;
     res->status_proc = malloc(sizeof(enum JobStatus *));
     res->status_proc[0] = JOB_RUNNING;
-    res->cmd_proc = malloc(sizeof(char **)); //TODO : à remplir
+    res->cmd_proc = malloc(sizeof(char *)); 
     res->cmd = malloc((strlen(cmd) + 1) * sizeof(char));
     strcpy(res->cmd, cmd);
+    res->cmd_proc[0] = cmd1;
     res->afficher_save = false;
     return res;
 }

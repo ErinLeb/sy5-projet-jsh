@@ -27,7 +27,7 @@ char * concat (int argc, char *argv[]) {
 }
 
 
-int cmd_ext(int argc, char* argv[], bool bg, pid_t pid){
+int cmd_ext(int argc, char* argv[], bool bg, pid_t pid, pid_t pgid, job * current_job){
 
     if (pid == 0){
         struct sigaction def = {0};
@@ -40,51 +40,10 @@ int cmd_ext(int argc, char* argv[], bool bg, pid_t pid){
         exit (1);
     }
 
-    int res = setpgid(pid, pid); //TODO à généraliser pour les pipes
+    int res = setpgid(pid, pgid); 
     if (res == -1){
         perror("setpgid");
         return 1;
     }
-    
-    char * cmd = concat(argc, argv);
-    job * current_job = new_job(pid, cmd);
-    jobs_suivis[cmp_jobs] = current_job;
-    cmp_jobs++;
-    //add_proc_to_job(pid,pid); //TODO : change pour les pipes
-    free(cmd);
-    int exitedstatus = current_job -> exitedstatus;
-
-    if (bg){
-        current_job -> afficher_save = true;
-        current_job -> jobstatus = JOB_RUNNING;
-    }
-    else {
-        res = tcsetpgrp(default_fd[0], pid);
-        if (res == -1){
-            perror("tcsetpgrp cmd_ext");
-            return 1;
-        }   
-        
-        current_job -> jobstatus = JOB_RUNNING;
-        
-        if(set_status(current_job, bg) < 0){
-            perror("wait cmd_ext");
-            return 1;
-        }
-
-        exitedstatus = current_job -> exitedstatus;
-        
-        if(current_job->jobstatus != JOB_RUNNING && current_job->jobstatus != JOB_STOPPED){
-            suppresion_job(cmp_jobs - 1);
-        }else{
-            current_job->afficher_save = true;
-        }
-
-        res = tcsetpgrp(default_fd[0], getpgid(getpid()));
-        if (res == -1){
-            perror("tcsetpgrp jsh");
-            return 1;
-        }
-    }
-    return exitedstatus;
+    return 0;
 }
