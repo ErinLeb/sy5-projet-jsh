@@ -49,7 +49,7 @@ char * prompt(char * prompt){
         path[max_length] = '\0';
     }
 
-    sprintf(prompt,"\001\033[91m\002[%d]\001\033[32m\002%s\001\033[00m\002$ ",cmp_jobs, path);
+    sprintf(prompt,"\001\033[91m\002[%d]\001\033[32m\002%s\001\033[00m\002$ ", cmp_jobs, path);
     
     free(path);
     return prompt;
