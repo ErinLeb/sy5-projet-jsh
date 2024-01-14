@@ -38,7 +38,7 @@ int fg(int job_id){
     int info_fils;
     fprintf(stderr, "%s\n", resume -> cmd);
 
-    info_fils = set_status(resume, true);
+    info_fils = set_status(resume,false);
     if(info_fils == -1){
         perror("waitpid (fg)");
         return -1;

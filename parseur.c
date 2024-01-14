@@ -215,7 +215,7 @@ void is_bg(char *cmd){
     int length = strlen(cmd);
 
     if(length == 0){ 
-        parseur_redirections(cmd, false);
+        val_retour = 0;
         return;
     }
 
@@ -252,6 +252,8 @@ void parseur_redirections(char *cmd, bool bg){
     bool redirection = false; 
     bool creat = true; // indique si le flag O_CREAT est présent
     bool changed[3] = {false, false, false}; // descripteurs changés
+    int pgid;
+    bool pipe_redir;
 
     while(current != NULL){  
         // si strtok détecte un symbole >, >>, <, ...
@@ -347,9 +349,13 @@ void parseur_redirections(char *cmd, bool bg){
                     return;
                 }
                 changed[1] = true;
-                parseur(argc, argv, bg);
+                if(!pipe_redir){
+                    pgid = getpid();
+                }
+                parseur(argc, argv, bg /*, pgid*/);
                 exit(val_retour);
             }else{
+                //TODO: merge pour enlever les zombies
                 res = close(fd[1]);
                 if(res < 0){
                     val_retour = 1;
@@ -372,6 +378,12 @@ void parseur_redirections(char *cmd, bool bg){
                     return;
                 }
                 changed[0] = true;
+                
+                if(!pipe_redir){
+                    pipe_redir = true;
+                    pgid = res;
+                }
+
                 //on remet argc et argv à 0
                 argc = 0;
                 free(argv);
@@ -427,7 +439,10 @@ void parseur_redirections(char *cmd, bool bg){
     }
 
     // On traite la commande
-    parseur(argc, argv, bg);
+    /*if(!pipe_redir){
+        pgid = 
+    }*/
+    parseur(argc, argv, bg/*,pgid*/);
 
     goto maj_default;
 
